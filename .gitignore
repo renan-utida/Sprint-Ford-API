@@ -31,3 +31,10 @@ build/
 
 ### VS Code ###
 .vscode/
+
+# Credenciais — NUNCA subir
+.env
+
+# Logs
+*.log
+

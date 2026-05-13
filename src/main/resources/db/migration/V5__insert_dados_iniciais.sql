@@ -1,6 +1,6 @@
 -- ADMIN padrao
--- senha em texto: admin@specradar123
--- hash BCrypt gerado com strength 10
+-- admin@specradar.com  → senha: Admin@2026
+-- hash BCrypt gerado com strength 12
 INSERT INTO ford_usuarios (nome, email, senha, role, ativo, criado_em)
 VALUES (
            'Administrador SpecRadar',
@@ -12,7 +12,7 @@ VALUES (
        );
 
 -- Analista padrao
--- senha em texto: analista@specradar123
+-- analista@specradar.com  → senha: Analyst@2026
 INSERT INTO ford_usuarios (nome, email, senha, role, ativo, criado_em)
 VALUES (
            'Analista Ford',
