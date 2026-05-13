@@ -1,23 +1,23 @@
--- ADMIN padrão
+-- ADMIN padrao
 -- senha em texto: admin@specradar123
 -- hash BCrypt gerado com strength 10
 INSERT INTO ford_usuarios (nome, email, senha, role, ativo, criado_em)
 VALUES (
            'Administrador SpecRadar',
            'admin@specradar.com',
-           '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.',
+           '$2a$12$/NBQZ.FDzpEl1JncunAFheIWUNTrLnuJKwCrjhmRfxGt.GoKWI8N6',
            'ADMIN',
            1,
            CURRENT_TIMESTAMP
        );
 
--- Analista padrão
+-- Analista padrao
 -- senha em texto: analista@specradar123
 INSERT INTO ford_usuarios (nome, email, senha, role, ativo, criado_em)
 VALUES (
            'Analista Ford',
            'analista@specradar.com',
-           '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2uheWG/igi.',
+           '$2a$12$dIABQaCN37nBXPYvM93DuuJPaitcl1TxhBcSFC75HmGL77kzCCLu6',
            'ANALISTA',
            1,
            CURRENT_TIMESTAMP
