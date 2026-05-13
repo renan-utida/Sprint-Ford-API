@@ -1,4 +1,6 @@
 package br.com.ford.specradar.domain.enums;
 
-public class RoleUsuario {
+public enum RoleUsuario {
+    ADMIN,
+    ANALISTA
 }
