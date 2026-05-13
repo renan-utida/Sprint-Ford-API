@@ -24,7 +24,7 @@ public class JwtService {
     @Value("${jwt.expiration}")
     private long expiration;
 
-    // ── Gerar token ────────────────────────────────────────────
+    // Gerar token
 
     public String gerarToken(Usuario usuario) {
         Map<String, Object> claims = new HashMap<>();
@@ -40,7 +40,7 @@ public class JwtService {
                 .compact();
     }
 
-    // ── Extrair dados do token ──────────────────────────────────
+    // Extrair dados do token
 
     public String extrairEmail(String token) {
         return extrairClaim(token, Claims::getSubject);
@@ -59,7 +59,7 @@ public class JwtService {
         return resolver.apply(claims);
     }
 
-    // ── Validar token ──────────────────────────────────────────
+    // Validar token
 
     public boolean isTokenValido(String token, UserDetails userDetails) {
         String email = extrairEmail(token);
@@ -70,7 +70,7 @@ public class JwtService {
         return extrairExpiracao(token).before(new Date());
     }
 
-    // ── Utilitários internos ───────────────────────────────────
+    // Utilitários internos
 
     private Claims extrairTodosClaims(String token) {
         return Jwts.parser()
