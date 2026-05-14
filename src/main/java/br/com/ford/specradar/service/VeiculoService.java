@@ -1,0 +1,76 @@
+package br.com.ford.specradar.service;
+
+import br.com.ford.specradar.domain.Veiculo;
+import br.com.ford.specradar.domain.enums.MarcaVeiculo;
+import br.com.ford.specradar.dto.request.VeiculoRequest;
+import br.com.ford.specradar.dto.response.VeiculoResponse;
+import br.com.ford.specradar.exception.ResourceNotFoundException;
+import br.com.ford.specradar.repository.VeiculoRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class VeiculoService {
+
+    private final VeiculoRepository veiculoRepository;
+
+    public List<VeiculoResponse> listar() {
+        return veiculoRepository.findByAtivoTrue()
+                .stream()
+                .map(VeiculoResponse::fromEntity)
+                .toList();
+    }
+
+    public List<VeiculoResponse> listarPorMarca(MarcaVeiculo marca) {
+        return veiculoRepository.findByMarcaAndAtivoTrue(marca)
+                .stream()
+                .map(VeiculoResponse::fromEntity)
+                .toList();
+    }
+
+    public VeiculoResponse buscarPorId(Long id) {
+        Veiculo veiculo = veiculoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Veiculo", id));
+        return VeiculoResponse.fromEntity(veiculo);
+    }
+
+    // Usado internamente pelo ConsultaService
+    public Veiculo buscarEntidadePorId(Long id) {
+        return veiculoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Veiculo", id));
+    }
+
+    public VeiculoResponse criar(VeiculoRequest dto) {
+        Veiculo veiculo = Veiculo.builder()
+                .marca(dto.getMarca())
+                .modelo(dto.getModelo())
+                .versao(dto.getVersao())
+                .ano(dto.getAno())
+                .ativo(true)
+                .build();
+
+        return VeiculoResponse.fromEntity(veiculoRepository.save(veiculo));
+    }
+
+    public VeiculoResponse atualizar(Long id, VeiculoRequest dto) {
+        Veiculo veiculo = veiculoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Veiculo", id));
+
+        veiculo.setMarca(dto.getMarca());
+        veiculo.setModelo(dto.getModelo());
+        veiculo.setVersao(dto.getVersao());
+        veiculo.setAno(dto.getAno());
+
+        return VeiculoResponse.fromEntity(veiculoRepository.save(veiculo));
+    }
+
+    public void desativar(Long id) {
+        Veiculo veiculo = veiculoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Veiculo", id));
+        veiculo.setAtivo(false);
+        veiculoRepository.save(veiculo);
+    }
+}
