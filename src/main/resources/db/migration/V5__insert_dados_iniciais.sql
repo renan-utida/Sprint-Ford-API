@@ -5,7 +5,7 @@ INSERT INTO ford_usuarios (nome, email, senha, role, ativo, criado_em)
 VALUES (
            'Administrador SpecRadar',
            'admin@specradar.com',
-           '$2a$12$QWMGzYFso53CfTSHDr.M5.uKuegjZGMd3ei63toUSuxBr9aAqBLDG',
+           '$2a$12$qe56g7GA45wxn2vRaAsFwu0BBfMCWiBifjIzWJgBs4OOdbATQlExC',
            'ADMIN',
            1,
            CURRENT_TIMESTAMP
@@ -17,7 +17,7 @@ INSERT INTO ford_usuarios (nome, email, senha, role, ativo, criado_em)
 VALUES (
            'Analista Ford',
            'analista@specradar.com',
-           '$2a$12$VUUjdqMVP7C1cV4vkQV8m.dYGRXHSQC2fhA/MkEe/D7e86rO2Pop2',
+           '$2a$12$e0TLiD3z7YByNRSuAY8ZNu3pDOHzMYwISJpFYxntY4xv1fqLlUpXa',
            'ANALISTA',
            1,
            CURRENT_TIMESTAMP
