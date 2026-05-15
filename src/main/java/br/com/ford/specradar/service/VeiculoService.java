@@ -19,7 +19,15 @@ public class VeiculoService {
     private final VeiculoRepository veiculoRepository;
 
     @Transactional(readOnly = true)
-    public List<VeiculoResponse> listar() {
+    public List<VeiculoResponse> listarTodos() {
+        return veiculoRepository.findAll()
+                .stream()
+                .map(VeiculoResponse::fromEntity)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<VeiculoResponse> listarAtivos() {
         return veiculoRepository.findByAtivoTrue()
                 .stream()
                 .map(VeiculoResponse::fromEntity)
@@ -80,5 +88,18 @@ public class VeiculoService {
                 .orElseThrow(() -> new ResourceNotFoundException("Veiculo", id));
         veiculo.setAtivo(false);
         veiculoRepository.save(veiculo);
+    }
+
+    @Transactional
+    public VeiculoResponse reativar(Long id) {
+        Veiculo veiculo = veiculoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Veiculo", id));
+
+        if (veiculo.getAtivo()) {
+            throw new IllegalArgumentException("Veículo já está ativo");
+        }
+
+        veiculo.setAtivo(true);
+        return VeiculoResponse.fromEntity(veiculoRepository.save(veiculo));
     }
 }

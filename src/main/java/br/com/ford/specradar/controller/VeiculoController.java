@@ -28,7 +28,7 @@ public class VeiculoController {
     private final VeiculoService veiculoService;
     private final ConsultaService consultaService;
 
-    @Operation(summary = "Listar veículos", description = "Lista todos os veículos ativos")
+    @Operation(summary = "Listar veículos ativos", description = "Lista todos os veículos ativos")
     @GetMapping
     public ResponseEntity<List<VeiculoResponse>> listar(
             @RequestParam(required = false) MarcaVeiculo marca
@@ -36,7 +36,7 @@ public class VeiculoController {
         if (marca != null) {
             return ResponseEntity.ok(veiculoService.listarPorMarca(marca));
         }
-        return ResponseEntity.ok(veiculoService.listar());
+        return ResponseEntity.ok(veiculoService.listarAtivos());
     }
 
     @Operation(summary = "Buscar veículo por ID", description = "Retorna um veículo e registra a consulta")
@@ -51,6 +51,12 @@ public class VeiculoController {
         consultaService.registrar(usuarioLogado.getId(), id);
 
         return ResponseEntity.ok(veiculo);
+    }
+
+    @Operation(summary = "Listar todos os veículos", description = "Lista ativos e inativos — apenas ADMIN")
+    @GetMapping("/todos")
+    public ResponseEntity<List<VeiculoResponse>> listarTodos() {
+        return ResponseEntity.ok(veiculoService.listarTodos());
     }
 
     @Operation(summary = "Cadastrar veículo", description = "Cria um novo veículo — apenas ADMIN")
@@ -76,5 +82,11 @@ public class VeiculoController {
     public ResponseEntity<Void> desativar(@PathVariable Long id) {
         veiculoService.desativar(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @Operation(summary = "Reativar veículo", description = "Reativa um veículo desativado — apenas ADMIN")
+    @PatchMapping("/{id}/reativar")
+    public ResponseEntity<VeiculoResponse> reativar(@PathVariable Long id) {
+        return ResponseEntity.ok(veiculoService.reativar(id));
     }
 }

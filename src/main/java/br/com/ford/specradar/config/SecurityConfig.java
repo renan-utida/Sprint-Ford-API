@@ -69,11 +69,17 @@ public class SecurityConfig {
                                 "/h2-console/**"
                         ).permitAll()
 
-                        // Veículos — GET para ANALISTA e ADMIN, resto só ADMIN
+                        // Veículos — GET para ANALISTA e ADMIN com excecao do Listar todos (incluindo inativos) — só ADMIN
+                        // O Resto só ADMIN
+
+                        // Listar todos (incluindo inativos) — só ADMIN
+                        .requestMatchers(HttpMethod.GET, "/api/veiculos/todos").hasRole("ADMIN")
+                        // Demais GETs — ANALISTA e ADMIN
                         .requestMatchers(HttpMethod.GET, "/api/veiculos/**").hasAnyRole("ANALISTA", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/veiculos/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/veiculos/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/veiculos/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/api/veiculos/**").hasRole("ADMIN")
 
                         // Especificações — mesma lógica dos veículos
                         .requestMatchers(HttpMethod.GET, "/api/especificacoes/**").hasAnyRole("ANALISTA", "ADMIN")

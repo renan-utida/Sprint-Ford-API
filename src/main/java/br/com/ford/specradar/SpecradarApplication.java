@@ -18,7 +18,7 @@ public class SpecradarApplication {
 		String port    = env.getProperty("server.port", "8080");
 		String profile = env.getProperty("spring.profiles.active", "dev");
 
-		System.out.println("========================================================");
+		System.out.println("\n\n\n========================================================");
 		System.out.println("			SpecRadar API — Ford FIAP 2026				");
 		System.out.println("		  Inteligência Competitiva Automotiva			");
 		System.out.println("========================================================");
@@ -36,6 +36,6 @@ public class SpecradarApplication {
 		System.out.println();
 		System.out.println("Login (ANALISTA): analista@specradar.com / Analista@2026");
 		System.out.println("Login (ADMIN):    	  admin@specradar.com   / Admin@2026");
-		System.out.println("========================================================");
+		System.out.println("========================================================\n\n\n");
 	}
 }
