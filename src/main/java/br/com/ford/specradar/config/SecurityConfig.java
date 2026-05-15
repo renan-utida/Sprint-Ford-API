@@ -58,9 +58,6 @@ public class SecurityConfig {
                         // Login publico
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
 
-                        // Register só ADMIN
-                        .requestMatchers(HttpMethod.POST, "/api/auth/register").hasRole("ADMIN")
-
                         // Swagger e H2 publicos
                         .requestMatchers(
                                 "/swagger-ui.html",
