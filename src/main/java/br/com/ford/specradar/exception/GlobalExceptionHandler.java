@@ -9,6 +9,8 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 
 import lombok.Builder;
 import lombok.Data;
@@ -35,7 +37,7 @@ public class GlobalExceptionHandler {
                 ));
     }
 
-    // 400 — Validação de campos
+    // 400 — Validacao de campos
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErroResponse> handleValidacao(
             MethodArgumentNotValidException ex,
@@ -62,6 +64,50 @@ public class GlobalExceptionHandler {
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
                 .body(erro);
+    }
+
+    // 400 — Enum invalido ou JSON malformado
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErroResponse> handleJsonInvalido(
+            HttpMessageNotReadableException ex,
+            HttpServletRequest request
+    ) {
+        String mensagem = "Requisição inválida";
+
+        if (ex.getCause() instanceof InvalidFormatException ife) {
+            if (ife.getTargetType() != null && ife.getTargetType().isEnum()) {
+                String valorInvalido = ife.getValue().toString();
+                String caminho = ife.getPath().isEmpty() ? "campo"
+                        : ife.getPath().getFirst().getFieldName();
+                mensagem = "Valor inválido para o campo '" + caminho
+                        + "': '" + valorInvalido + "'";
+            }
+        }
+
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ErroResponse.of(
+                        HttpStatus.BAD_REQUEST.value(),
+                        "Erro de validação",
+                        mensagem,
+                        request.getRequestURI()
+                ));
+    }
+
+    // 400 — Argumento invalido (ex: email duplicado)
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErroResponse> handleIllegalArgument(
+            IllegalArgumentException ex,
+            HttpServletRequest request
+    ) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(ErroResponse.of(
+                        HttpStatus.BAD_REQUEST.value(),
+                        "Requisição inválida",
+                        ex.getMessage(),
+                        request.getRequestURI()
+                ));
     }
 
     // 403 — Acesso negado

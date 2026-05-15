@@ -10,6 +10,7 @@ import br.com.ford.specradar.repository.UsuarioRepository;
 import br.com.ford.specradar.repository.VeiculoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -21,6 +22,7 @@ public class ConsultaService {
     private final UsuarioRepository usuarioRepository;
     private final VeiculoRepository veiculoRepository;
 
+    @Transactional(readOnly = true)
     public List<ConsultaResponse> listarTodas() {
         return consultaRepository.findAll()
                 .stream()
@@ -28,6 +30,7 @@ public class ConsultaService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public List<ConsultaResponse> listarPorUsuario(Long usuarioId) {
         return consultaRepository.findByUsuarioId(usuarioId)
                 .stream()
@@ -35,6 +38,7 @@ public class ConsultaService {
                 .toList();
     }
 
+    @Transactional
     public ConsultaResponse registrar(Long usuarioId, Long veiculoId) {
         Usuario usuario = usuarioRepository.findById(usuarioId)
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario", usuarioId));

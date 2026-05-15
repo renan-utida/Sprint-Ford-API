@@ -9,6 +9,7 @@ import br.com.ford.specradar.repository.EspecificacaoRepository;
 import br.com.ford.specradar.repository.VeiculoRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -19,6 +20,7 @@ public class EspecificacaoService {
     private final EspecificacaoRepository especificacaoRepository;
     private final VeiculoRepository veiculoRepository;
 
+    @Transactional(readOnly = true)
     public List<EspecificacaoResponse> listarPorVeiculo(Long veiculoId) {
         // Verifica se o veículo existe antes de listar
         if (!veiculoRepository.existsById(veiculoId)) {
@@ -31,6 +33,7 @@ public class EspecificacaoService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public EspecificacaoResponse buscarPorId(Long veiculoId, Long specId) {
         Especificacao especificacao = especificacaoRepository.findById(specId)
                 .orElseThrow(() -> new ResourceNotFoundException("Especificacao", specId));
@@ -43,6 +46,7 @@ public class EspecificacaoService {
         return EspecificacaoResponse.fromEntity(especificacao);
     }
 
+    @Transactional
     public EspecificacaoResponse criar(Long veiculoId, EspecificacaoRequest dto) {
         Veiculo veiculo = veiculoRepository.findById(veiculoId)
                 .orElseThrow(() -> new ResourceNotFoundException("Veiculo", veiculoId));
@@ -60,6 +64,7 @@ public class EspecificacaoService {
         );
     }
 
+    @Transactional
     public EspecificacaoResponse atualizar(Long veiculoId, Long specId, EspecificacaoRequest dto) {
         Especificacao especificacao = especificacaoRepository.findById(specId)
                 .orElseThrow(() -> new ResourceNotFoundException("Especificacao", specId));
@@ -78,6 +83,7 @@ public class EspecificacaoService {
         );
     }
 
+    @Transactional
     public void deletar(Long veiculoId, Long specId) {
         Especificacao especificacao = especificacaoRepository.findById(specId)
                 .orElseThrow(() -> new ResourceNotFoundException("Especificacao", specId));
