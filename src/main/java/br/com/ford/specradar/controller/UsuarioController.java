@@ -37,7 +37,6 @@ public class UsuarioController {
 
     @Operation(summary = "Registrar usuário", description = "Cria um novo usuário — apenas ADMIN")
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
     public ResponseEntity<UsuarioResponse> criar(@RequestBody @Valid UsuarioRequest request) {
         return ResponseEntity
                 .status(HttpStatus.CREATED)

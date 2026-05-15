@@ -40,7 +40,7 @@ public class SpecradarApplication {
 		if (isDev) {
 			System.out.println("  H2 Console : http://localhost:" + port + "/h2-console");
 			System.out.println("               JDBC URL: jdbc:h2:mem:specradar");
-			System.out.println("			   User: Ford | Password: Fiap123");
+			System.out.println("			   User: Ford | Password: Fiap2026");
 		}
 
 		System.out.println("--------------------------------------------------------");
