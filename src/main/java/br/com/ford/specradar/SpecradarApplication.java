@@ -28,14 +28,11 @@ public class SpecradarApplication {
 		System.out.println("					LINKS ÚTEIS				    		");
 		System.out.println();
 		System.out.println("Swagger UI:		   http://localhost:" + port + "/swagger-ui.html");
-		System.out.println("Swagger UI:   	   http://localhost:8080/swagger-ui.html");
 		System.out.println("API Docs:			   http://localhost:" + port + "/v3/api-docs");
-		System.out.println("API Docs:              http://localhost:8080/v3/api-docs");
 		System.out.println("H2 Console: 			http://localhost:" + port + "/h2-console");
-		System.out.println("H2 Console: 			http://localhost:8080/h2-console");
 		System.out.println("						(Somente no profile DEV)		");
 		System.out.println("--------------------------------------------------------");
-		System.out.println("				  CREDENCIAIS DE TESTE			   		");
+		System.out.println("				CREDENCIAIS DE TESTE			   		");
 		System.out.println();
 		System.out.println("Login (ANALISTA): analista@specradar.com / Analista@2026");
 		System.out.println("Login (ADMIN):    	  admin@specradar.com   / Admin@2026");

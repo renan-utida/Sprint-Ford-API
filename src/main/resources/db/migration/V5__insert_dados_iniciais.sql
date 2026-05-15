@@ -12,7 +12,7 @@ VALUES (
        );
 
 -- Analista padrao
--- analista@specradar.com  → senha: Analyst@2026
+-- analista@specradar.com  → senha: Analista@2026
 INSERT INTO ford_usuarios (nome, email, senha, role, ativo, criado_em)
 VALUES (
            'Analista Ford',
