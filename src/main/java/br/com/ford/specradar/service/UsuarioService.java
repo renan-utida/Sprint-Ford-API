@@ -77,4 +77,17 @@ public class UsuarioService {
         usuario.setAtivo(false);
         usuarioRepository.save(usuario);
     }
+
+    @Transactional
+    public UsuarioResponse reativar(Long id) {
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario", id));
+
+        if (usuario.getAtivo()) {
+            throw new IllegalArgumentException("Usuário já está ativo");
+        }
+
+        usuario.setAtivo(true);
+        return UsuarioResponse.fromEntity(usuarioRepository.save(usuario));
+    }
 }

@@ -58,4 +58,10 @@ public class UsuarioController {
         usuarioService.desativar(id);
         return ResponseEntity.noContent().build();
     }
+
+    @Operation(summary = "Reativar usuário", description = "Reativa um usuário desativado — apenas ADMIN")
+    @PatchMapping("/{id}/reativar")
+    public ResponseEntity<UsuarioResponse> reativar(@PathVariable Long id) {
+        return ResponseEntity.ok(usuarioService.reativar(id));
+    }
 }
