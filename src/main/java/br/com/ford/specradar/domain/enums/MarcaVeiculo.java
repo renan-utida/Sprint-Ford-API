@@ -1,6 +1,7 @@
 package br.com.ford.specradar.domain.enums;
 
 public enum MarcaVeiculo {
+    FORD,
     TOYOTA,
     VOLKSWAGEN,
     CHEVROLET,
