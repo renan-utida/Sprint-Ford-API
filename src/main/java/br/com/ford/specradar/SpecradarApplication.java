@@ -19,7 +19,7 @@ public class SpecradarApplication {
 		String profile = env.getProperty("spring.profiles.active", "dev");
 		boolean isDev  = "dev".equalsIgnoreCase(profile);
 
-		System.out.println("\n\n\n========================================================");
+		System.out.println("\n\n========================================================");
 		System.out.println("			SpecRadar API — Ford FIAP 2026				");
 		System.out.println("		  Inteligência Competitiva Automotiva			");
 		System.out.println("========================================================");
@@ -47,6 +47,6 @@ public class SpecradarApplication {
 		System.out.println("  CREDENCIAIS DE TESTE\n");
 		System.out.println("  ADMIN    : admin@specradar.com    / Admin@2026");
 		System.out.println("  ANALISTA : analista@specradar.com / Analista@2026");
-		System.out.println("========================================================\n\n\n");
+		System.out.println("========================================================\n\n");
 	}
 }
