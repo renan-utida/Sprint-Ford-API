@@ -161,7 +161,7 @@ cp .env.example .env
 4. Preencha as variáveis de ambiente e adicione o SPRING_PROFILE como `dev`:
 `SPRING_PROFILE=dev`
 
-5. Rode a aplicação — o perfil `dev` é o padrão:
+5. Rode a aplicação - o perfil `dev` é o padrão:
 ```bash
 mvn spring-boot:run
 ```
@@ -180,7 +180,7 @@ SPRING_PROFILE=prod
 
 2. Preencha as credenciais Oracle no `.env`.
 
-3. Rode a aplicação — o Flyway cria as tabelas automaticamente no Oracle na primeira execução.
+3. Rode a aplicação - o Flyway cria as tabelas automaticamente no Oracle na primeira execução.
 
 ---
 
