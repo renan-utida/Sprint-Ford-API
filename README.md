@@ -1,6 +1,6 @@
 # SpecRadar API
 
-**Inteligência Competitiva Automotiva — Ford FIAP 2026**
+**Inteligência Competitiva Automotiva - Ford FIAP 2026**
 
 API REST para gerenciamento de veículos concorrentes e suas especificações técnicas, desenvolvida como parte da Sprint 1 da parceria Ford × FIAP. Permite que analistas da Ford consultem e comparem especificações de veículos concorrentes de forma padronizada, com autenticação JWT e controle de acesso por perfil.
 
@@ -26,7 +26,7 @@ API REST para gerenciamento de veículos concorrentes e suas especificações t�
 
 ## Contexto
 
-O Desafio 01 da Ford propõe automatizar a coleta de especificações técnicas de veículos concorrentes — processo que hoje consome aproximadamente **1 hora por versão** de forma manual, com alta probabilidade de imprecisão.
+O Desafio 01 da Ford propõe automatizar a coleta de especificações técnicas de veículos concorrentes - processo que hoje consome aproximadamente **1 hora por versão** de forma manual, com alta probabilidade de imprecisão.
 
 O SpecRadar resolve esse problema oferecendo uma API estruturada onde analistas podem cadastrar, consultar e comparar especificações de veículos concorrentes em formato padronizado, com histórico de consultas e controle de acesso por perfil.
 
@@ -45,8 +45,8 @@ O SpecRadar resolve esse problema oferecendo uma API estruturada onde analistas 
 | Springdoc OpenAPI | 2.8.9 | Documentação Swagger |
 | Bucket4j | 8.10.1 | Rate limiting |
 | Lombok | 1.18.38 | Redução de boilerplate |
-| H2 | — | Banco em memória (dev) |
-| Oracle 19c | — | Banco relacional (prod) |
+| H2 | - | Banco em memória (dev) |
+| Oracle 19c | - | Banco relacional (prod) |
 
 ---
 
