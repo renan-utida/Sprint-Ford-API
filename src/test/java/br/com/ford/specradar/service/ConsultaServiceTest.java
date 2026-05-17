@@ -24,7 +24,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("Testes — ConsultaService")
+@DisplayName("Testes - ConsultaService")
 public class ConsultaServiceTest {
 
     @Mock
@@ -211,7 +211,7 @@ public class ConsultaServiceTest {
     }
 
     @Test
-    @DisplayName("Deve verificar isolamento — admin e analista têm consultas separadas")
+    @DisplayName("Deve verificar isolamento - admin e analista têm consultas separadas")
     public void testIsolamentoConsultas() {
         when(consultaRepository.findByUsuarioId(1L))
                 .thenReturn(List.of(consultaAdmin));

@@ -22,7 +22,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("Testes — EspecificacaoService")
+@DisplayName("Testes - EspecificacaoService")
 public class EspecificacaoServiceTest {
 
     @Mock

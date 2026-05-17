@@ -5,7 +5,10 @@ import org.junit.platform.suite.api.Suite;
 
 // Roda todos os testes dentro dos pacotes indicados
 @Suite
-@SelectPackages("br.com.ford.specradar.service")
+@SelectPackages({
+        "br.com.ford.specradar.service",
+        "br.com.ford.specradar.domain"
+})
 public class SuiteDeTestesGeral {
     // Nenhum código necessário aqui
 }
