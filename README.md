@@ -108,7 +108,7 @@ Camadas transversais que suportam todas as outras:
 
 ### Arquitetura em Camadas em vez de Hexagonal ou Microsserviços
 
-A Arquitetura em Camadas foi escolhida por ser o padrão ensinado em sala e por atender plenamente aos critérios de SOA da Sprint — separação clara entre apresentação, serviço e dados. Hexagonal adicionaria complexidade de ports e adapters desnecessária para o escopo.
+A Arquitetura em Camadas foi escolhida por ser o padrão ensinado em sala e por atender plenamente aos critérios de SOA da Sprint — separação clara entre apresentação, serviço e dados. Hexagonal adicionaria complexidade de ports e adapters desnecessária para o escopo. Microsserviços estaria completamente fora de escopo para uma entrega com prazo curto.
 
 ### JWT em vez de Session
 
@@ -490,6 +490,851 @@ http://localhost:8080/v3/api-docs
 
 ---
 
+## Validação dos Endpoints
+
+Todos os endpoints foram testados via **Swagger UI** e **Insomnia** nos perfis `dev` (H2) e `prod` (Oracle).
+
+---
+
+### ✅ Testes de Sucesso
+
+### Autenticação
+
+**Login como ADMIN — `POST /api/auth/login`**
+
+Request:
+```json
+{
+  "email": "admin@specradar.com",
+  "senha": "Admin@2026"
+}
+```
+
+Response `200 OK`:
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiJ9...",
+  "tipo": "Bearer",
+  "expiraEm": "2026-05-15T21:00:00"
+}
+```
+
+---
+
+**Login como ANALISTA — `POST /api/auth/login`**
+
+Request:
+```json
+{
+  "email": "analista@specradar.com",
+  "senha": "Analista@2026"
+}
+```
+
+Response `200 OK`:
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiJ9...",
+  "tipo": "Bearer",
+  "expiraEm": "2026-05-15T22:00:00"
+}
+```
+
+---
+
+### Veículos
+
+| Cenário | Método | Endpoint | Resultado |
+|---|---|---|---|
+| Listar veículos ativos | GET | `/api/veiculos` | 200 com lista |
+| Filtrar por marca | GET | `/api/veiculos?marca=TOYOTA` | 200 só com Toyotas |
+| Buscar por ID (registra consulta) | GET | `/api/veiculos/1` | 200 com veículo |
+| Listar todos incluindo inativos | GET | `/api/veiculos/todos` | 200 com lista completa |
+| Cadastrar veículo | POST | `/api/veiculos` | 201 com veículo criado |
+| Atualizar veículo | PUT | `/api/veiculos/{id}` | 200 com dados atualizados |
+| Desativar veículo | DELETE | `/api/veiculos/{id}` | 204 sem body |
+| Reativar veículo | PATCH | `/api/veiculos/{id}/reativar` | 200 com veículo reativado |
+
+---
+
+**Cadastrar veículo — `POST /api/veiculos`**
+
+Request:
+```json
+{
+  "marca": "JEEP",
+  "modelo": "Compass",
+  "versao": "Limited",
+  "ano": 2025
+}
+```
+
+Response `201 Created`:
+```json
+{
+  "id": 5,
+  "marca": "JEEP",
+  "modelo": "Compass",
+  "versao": "Limited",
+  "ano": 2025,
+  "ativo": true,
+  "criadoEm": "2026-05-15T16:09:29"
+}
+```
+
+---
+
+**Buscar veículo por ID — `GET /api/veiculos/4`**
+
+Response `200 OK`:
+```json
+{
+  "id": 4,
+  "marca": "FORD",
+  "modelo": "Ranger",
+  "versao": "Raptor",
+  "ano": 2025,
+  "ativo": true,
+  "criadoEm": "2026-05-15T15:41:56"
+}
+```
+
+---
+
+**Filtrar por marca — `GET /api/veiculos?marca=TOYOTA`**
+
+Response `200 OK`:
+```json
+[
+  {
+    "id": 1,
+    "marca": "TOYOTA",
+    "modelo": "Hilux",
+    "versao": "GR-Sport",
+    "ano": 2025,
+    "ativo": true,
+    "criadoEm": "2026-05-15T13:59:13"
+  }
+]
+```
+
+---
+
+**Desativar veículo — `DELETE /api/veiculos/5`**
+
+Response `204 No Content` — sem body.
+
+---
+
+**Listar veículos ativos — `GET /api/veiculos`**
+
+Response `200 OK`:
+```json
+[
+  {
+    "id": 1,
+    "marca": "TOYOTA",
+    "modelo": "Hilux",
+    "versao": "GR-Sport",
+    "ano": 2025,
+    "ativo": true,
+    "criadoEm": "2026-05-15T13:59:13"
+  },
+  {
+    "id": 2,
+    "marca": "VOLKSWAGEN",
+    "modelo": "Amarok",
+    "versao": "V6 Extreme",
+    "ano": 2025,
+    "ativo": true,
+    "criadoEm": "2026-05-15T13:59:13"
+  },
+  {
+    "id": 3,
+    "marca": "CHEVROLET",
+    "modelo": "S10",
+    "versao": "High Country",
+    "ano": 2025,
+    "ativo": true,
+    "criadoEm": "2026-05-15T13:59:13"
+  },
+  {
+    "id": 4,
+    "marca": "FORD",
+    "modelo": "Ranger",
+    "versao": "Raptor",
+    "ano": 2025,
+    "ativo": true,
+    "criadoEm": "2026-05-15T15:41:56"
+  }
+]
+```
+
+---
+
+**Listar todos os veículos incluindo inativos — `GET /api/veiculos/todos`**
+
+Response `200 OK`:
+```json
+[
+  {
+    "id": 1,
+    "marca": "TOYOTA",
+    "modelo": "Hilux",
+    "versao": "GR-Sport",
+    "ano": 2025,
+    "ativo": true,
+    "criadoEm": "2026-05-15T13:59:13"
+  },
+  {
+    "id": 4,
+    "marca": "FORD",
+    "modelo": "Ranger",
+    "versao": "Raptor",
+    "ano": 2025,
+    "ativo": true,
+    "criadoEm": "2026-05-15T15:41:56"
+  },
+  {
+    "id": 5,
+    "marca": "JEEP",
+    "modelo": "Compass",
+    "versao": "Limited",
+    "ano": 2025,
+    "ativo": false,
+    "criadoEm": "2026-05-15T16:09:29"
+  }
+]
+```
+
+---
+
+**Reativar veículo — `PATCH /api/veiculos/5/reativar`**
+
+Response `200 OK`:
+```json
+{
+  "id": 5,
+  "marca": "JEEP",
+  "modelo": "Compass",
+  "versao": "Limited",
+  "ano": 2025,
+  "ativo": true,
+  "criadoEm": "2026-05-15T16:09:29"
+}
+```
+
+---
+
+**Atualizar veículo — `PUT /api/veiculos/5`**
+
+Request:
+```json
+{
+  "marca": "JEEP",
+  "modelo": "Compass",
+  "versao": "Limited 4x4",
+  "ano": 2025
+}
+```
+
+Response `200 OK`:
+```json
+{
+  "id": 5,
+  "marca": "JEEP",
+  "modelo": "Compass",
+  "versao": "Limited 4x4",
+  "ano": 2025,
+  "ativo": true,
+  "criadoEm": "2026-05-15T16:09:29"
+}
+```
+
+---
+
+### Especificações
+
+| Cenário | Método | Endpoint | Resultado |
+|---|---|---|---|
+| Listar specs de um veículo | GET | `/api/veiculos/{id}/especificacoes` | 200 com lista e dados do veículo |
+| Buscar spec por ID | GET | `/api/veiculos/{id}/especificacoes/{specId}` | 200 com spec |
+| Cadastrar spec | POST | `/api/veiculos/{id}/especificacoes` | 201 com spec criada |
+| Atualizar spec | PUT | `/api/veiculos/{id}/especificacoes/{specId}` | 200 com spec atualizada |
+| Deletar spec | DELETE | `/api/veiculos/{id}/especificacoes/{specId}` | 204 sem body |
+
+---
+
+**Listar especificações — `GET /api/veiculos/4/especificacoes`**
+
+Exibe todas as outras especificacoes relacionadas ao veículo de ID = 4, vou apenas deixar uma aqui exibindo
+
+Response `200 OK`:
+```json
+[
+  {
+    "id": 9,
+    "veiculo": {
+      "id": 4,
+      "marca": "FORD",
+      "modelo": "Ranger",
+      "versao": "Raptor",
+      "ano": 2025
+    },
+    "atributo": "Motor",
+    "valor": "V6 3.0L Nano bi turbo",
+    "unidade": null,
+    "disponivel": true,
+    "criadoEm": "2026-05-15T15:41:56"
+  }
+   
+]
+```
+
+---
+
+**Cadastrar especificação — `POST /api/veiculos/5/especificacoes`**
+
+Request:
+```json
+{
+  "atributo": "Motor",
+  "valor": "1.3 Turbo Flex",
+  "unidade": null,
+  "disponivel": true
+}
+```
+
+Response `201 Created`:
+```json
+{
+  "id": 23,
+  "veiculo": {
+    "id": 5,
+    "marca": "JEEP",
+    "modelo": "Compass",
+    "versao": "Limited",
+    "ano": 2025
+  },
+  "atributo": "Motor",
+  "valor": "1.3 Turbo Flex",
+  "unidade": null,
+  "disponivel": true,
+  "criadoEm": "2026-05-15T16:14:47"
+}
+```
+
+---
+
+**Buscar especificação por ID — `GET /api/veiculos/4/especificacoes/9`**
+
+Response `200 OK`:
+```json
+{
+  "id": 9,
+  "veiculo": {
+    "id": 4,
+    "marca": "FORD",
+    "modelo": "Ranger",
+    "versao": "Raptor",
+    "ano": 2025
+  },
+  "atributo": "Motor",
+  "valor": "V6 3.0L Nano bi turbo",
+  "unidade": null,
+  "disponivel": true,
+  "criadoEm": "2026-05-15T15:41:56"
+}
+```
+
+---
+
+**Atualizar especificação — `PUT /api/veiculos/1/especificacoes/2`**
+
+Request:
+```json
+{
+  "atributo": "Potencia",
+  "valor": "210",
+  "unidade": "cv",
+  "disponivel": true
+}
+```
+
+Response `200 OK`:
+```json
+{
+  "id": 2,
+  "veiculo": {
+    "id": 1,
+    "marca": "TOYOTA",
+    "modelo": "Hilux",
+    "versao": "GR-Sport",
+    "ano": 2025
+  },
+  "atributo": "Potencia",
+  "valor": "210",
+  "unidade": "cv",
+  "disponivel": true,
+  "criadoEm": "2026-05-15T13:59:13"
+}
+```
+
+---
+
+**Deletar especificação — `DELETE /api/veiculos/5/especificacoes/23`**
+
+Response `204 No Content` — sem body.
+
+---
+
+**Especificação marcada como não disponível — `POST /api/veiculos/1/especificacoes`**
+
+Request:
+```json
+{
+  "atributo": "Turbo Compressor Duplo",
+  "valor": "Não disponível nesta versão",
+  "unidade": null,
+  "disponivel": false
+}
+```
+
+Response `201 Created`:
+```json
+{
+  "id": 24,
+  "veiculo": {
+    "id": 1,
+    "marca": "TOYOTA",
+    "modelo": "Hilux",
+    "versao": "GR-Sport",
+    "ano": 2025
+  },
+  "atributo": "Turbo Compressor Duplo",
+  "valor": "Não disponível nesta versão",
+  "unidade": null,
+  "disponivel": false,
+  "criadoEm": "2026-05-15T16:20:00"
+}
+```
+
+---
+
+### Consultas
+
+| Cenário | Método | Endpoint | Resultado |
+|---|---|---|---|
+| ADMIN lista todas as consultas | GET | `/api/consultas` | 200 com todas |
+| ANALISTA lista só as próprias | GET | `/api/consultas` | 200 só com as do analista |
+
+---
+
+**Consultas como ADMIN — `GET /api/consultas`**
+
+Response `200 OK`:
+```json
+[
+  {
+    "id": 1,
+    "nomeUsuario": "Administrador SpecRadar",
+    "emailUsuario": "admin@specradar.com",
+    "marcaVeiculo": "TOYOTA",
+    "modeloVeiculo": "Hilux",
+    "versaoVeiculo": "GR-Sport",
+    "realizadaEm": "2026-05-15T16:15:56"
+  },
+  {
+    "id": 2,
+    "nomeUsuario": "Analista Ford",
+    "emailUsuario": "analista@specradar.com",
+    "marcaVeiculo": "FORD",
+    "modeloVeiculo": "Ranger",
+    "versaoVeiculo": "Raptor",
+    "realizadaEm": "2026-05-15T16:18:57"
+  }
+]
+```
+
+---
+
+**Consultas como ANALISTA — `GET /api/consultas`**
+
+É possível verificar apenas as suas consultas, não é possível verificar consultas do ADMIN
+
+Response `200 OK`:
+```json
+[
+  {
+    "id": 2,
+    "nomeUsuario": "Analista Ford",
+    "emailUsuario": "analista@specradar.com",
+    "marcaVeiculo": "FORD",
+    "modeloVeiculo": "Ranger",
+    "versaoVeiculo": "Raptor",
+    "realizadaEm": "2026-05-15T16:18:57"
+  }
+]
+```
+
+---
+
+### Usuarios
+
+| Cenário | Método | Endpoint | Resultado |
+|---|---|---|---|
+| Listar usuários | GET | `/api/usuarios` | 200 sem expor senhas |
+| Buscar por ID | GET | `/api/usuarios/{id}` | 200 com usuário |
+| Criar usuário | POST | `/api/usuarios` | 201 com usuário criado |
+| Atualizar usuário | PUT | `/api/usuarios/{id}` | 200 com dados atualizados |
+| Desativar usuário | DELETE | `/api/usuarios/{id}` | 204 sem body |
+| Reativar usuário | PATCH | `/api/usuarios/{id}/reativar` | 200 com usuário reativado |
+
+---
+
+**Listar usuários — `GET /api/usuarios`**
+
+Response `200 OK`:
+```json
+[
+  {
+    "id": 1,
+    "nome": "Administrador SpecRadar",
+    "email": "admin@specradar.com",
+    "role": "ADMIN",
+    "ativo": true,
+    "criadoEm": "2026-05-15T13:59:13"
+  },
+  {
+    "id": 2,
+    "nome": "Analista Ford",
+    "email": "analista@specradar.com",
+    "role": "ANALISTA",
+    "ativo": true,
+    "criadoEm": "2026-05-15T13:59:13"
+  }
+]
+```
+
+---
+
+**Buscar usuário por ID — `GET /api/usuarios/2`**
+
+Response `200 OK`:
+```json
+{
+  "id": 2,
+  "nome": "Analista Ford",
+  "email": "analista@specradar.com",
+  "role": "ANALISTA",
+  "ativo": true,
+  "criadoEm": "2026-05-15T13:59:13"
+}
+```
+
+---
+
+**Atualizar usuário — `PUT /api/usuarios/2`**
+
+Request:
+```json
+{
+  "nome": "Analista Ford Atualizado",
+  "email": "analista@specradar.com",
+  "senha": "Analista@2026",
+  "role": "ANALISTA"
+}
+```
+
+Response `200 OK`:
+```json
+{
+  "id": 2,
+  "nome": "Analista Ford Atualizado",
+  "email": "analista@specradar.com",
+  "role": "ANALISTA",
+  "ativo": true,
+  "criadoEm": "2026-05-15T13:59:13"
+}
+```
+
+---
+
+**Criar usuário — `POST /api/usuarios`**
+
+Request:
+```json
+{
+  "nome": "Novo Analista",
+  "email": "novo@specradar.com",
+  "senha": "Novo@2026",
+  "role": "ANALISTA"
+}
+```
+
+Response `201 Created`:
+```json
+{
+  "id": 3,
+  "nome": "Novo Analista",
+  "email": "novo@specradar.com",
+  "role": "ANALISTA",
+  "ativo": true,
+  "criadoEm": "2026-05-14T23:55:00"
+}
+```
+
+---
+
+**Desativar usuário — `DELETE /api/usuarios/3`**
+
+Response `204 No Content` — sem body.
+
+---
+
+**Reativar usuário — `PATCH /api/usuarios/3/reativar`**
+
+Response `200 OK`:
+```json
+{
+  "id": 3,
+  "nome": "Novo Analista",
+  "email": "novo@specradar.com",
+  "role": "ANALISTA",
+  "ativo": true,
+  "criadoEm": "2026-05-14T23:55:00"
+}
+```
+
+---
+
+### ❌ Testes de Falha e Segurança
+
+### Autenticação e Autorização
+
+| Cenário | Resultado Esperado | Obtido |
+|---|---|---|
+| Login com senha errada | 401 | ✅ |
+| Login com email inexistente | 401 | ✅ |
+| Login com body vazio | 400 com campos inválidos | ✅ |
+| Acessar endpoint sem token | 401 com mensagem | ✅ |
+| ANALISTA tentando criar veículo | 403 com mensagem | ✅ |
+| ANALISTA tentando criar especificação | 403 com mensagem | ✅ |
+| ANALISTA tentando listar usuários | 403 com mensagem | ✅ |
+| ANALISTA tentando registrar usuário | 403 com mensagem | ✅ |
+| Token inválido em qualquer endpoint | 401 com mensagem | ✅ |
+
+---
+
+**ANALISTA tentando criar veículo — `POST /api/veiculos`**
+
+Response `403 Forbidden`:
+```json
+{
+  "status": 403,
+  "erro": "Acesso negado",
+  "mensagem": "Você não tem permissão para acessar este recurso",
+  "path": "/api/veiculos",
+  "timestamp": "2026-05-15T00:06:05"
+}
+```
+
+---
+
+**Sem token — `GET /api/veiculos`**
+
+Response `401 Unauthorized`:
+```json
+{
+  "status": 401,
+  "erro": "Não autenticado",
+  "mensagem": "É necessário realizar o login para acessar este recurso",
+  "path": "/api/veiculos",
+  "timestamp": "2026-05-15T00:07:00"
+}
+```
+
+---
+
+**Login com senha errada — `POST /api/auth/login`**
+
+Request:
+```json
+{
+  "email": "admin@specradar.com",
+  "senha": "senhaerrada123"
+}
+```
+
+Response `401 Unauthorized`:
+```json
+{
+  "status": 401,
+  "erro": "Não autenticado",
+  "mensagem": "Credenciais inválidas ou token ausente",
+  "path": "/api/auth/login",
+  "timestamp": "2026-05-14T19:55:26"
+}
+```
+
+---
+
+### Validação de Entrada
+
+| Cenário | Resultado Esperado | Obtido |
+|---|---|---|
+| Cadastrar veículo com marca inválida (`MARCA_INVALIDA`) | 400 identificando o campo | ✅ |
+| Cadastrar veículo com body vazio | 400 com todos os campos | ✅ |
+| Cadastrar veículo com ano inválido (`2300`) | 400 com campo `ano` | ✅ |
+| Cadastrar veículo com modelo em branco | 400 com campo `modelo` | ✅ |
+| Cadastrar veículo com modelo muito longo (+100 chars) | 400 — previne buffer overflow | ✅ |
+| Registrar usuário com role inválida (`GERENTE`) | 400 identificando o campo | ✅ |
+| Registrar usuário com email duplicado | 400 com mensagem clara | ✅ |
+| Registrar usuário com campos faltando | 400 com lista de campos | ✅ |
+
+---
+
+**Marca inválida — `POST /api/veiculos`**
+
+Request:
+```json
+{
+  "marca": "MARCA_INVALIDA",
+  "modelo": "F40",
+  "versao": "Base",
+  "ano": 2025
+}
+```
+
+Response `400 Bad Request`:
+```json
+{
+  "status": 400,
+  "erro": "Erro de validação",
+  "mensagem": "Valor inválido para o campo 'marca': 'MARCA_INVALIDA'",
+  "path": "/api/veiculos",
+  "timestamp": "2026-05-14T23:56:44",
+  "campos": null
+}
+```
+
+---
+
+**Body vazio — `POST /api/veiculos`**
+
+Request:
+```json
+{}
+```
+
+Response `400 Bad Request`:
+```json
+{
+  "status": 400,
+  "erro": "Erro de validação",
+  "mensagem": "Um ou mais campos são inválidos",
+  "path": "/api/veiculos",
+  "timestamp": "2026-05-14T20:34:49",
+  "campos": {
+    "marca": "Marca é obrigatória",
+    "ano": "Ano é obrigatório",
+    "modelo": "Modelo é obrigatório",
+    "versao": "Versão é obrigatória"
+  }
+}
+```
+
+---
+
+**Email duplicado — `POST /api/usuarios`**
+
+Request:
+```json
+{
+  "nome": "Duplicado",
+  "email": "admin@specradar.com",
+  "senha": "Admin@2026",
+  "role": "ANALISTA"
+}
+```
+
+Response `400 Bad Request`:
+```json
+{
+  "status": 400,
+  "erro": "Requisição inválida",
+  "mensagem": "Email já cadastrado: admin@specradar.com",
+  "path": "/api/usuarios",
+  "timestamp": "2026-05-14T20:13:25",
+  "campos": null
+}
+```
+
+---
+
+### Recursos Não Encontrados e Segurança de Pertencimento
+
+| Cenário | Resultado Esperado | Obtido |
+|---|---|---|
+| Buscar veículo com ID inexistente | 404 com mensagem | ✅ |
+| Buscar spec com ID inexistente | 404 com mensagem | ✅ |
+| Acessar spec com veículo errado | 404 — impede acesso cruzado | ✅ |
+| Deletar spec de outro veículo | 404 — impede acesso cruzado | ✅ |
+| Buscar usuário inexistente | 404 com mensagem | ✅ |
+| Atualizar veículo inexistente | 404 com mensagem | ✅ |
+
+---
+
+**Segurança de pertencimento — `GET /api/veiculos/2/especificacoes/1`**
+
+A spec `id=1` pertence ao veículo `id=1`. Acessar via veículo `id=2` retorna:
+
+Response `404 Not Found`:
+```json
+{
+  "status": 404,
+  "erro": "Recurso não encontrado",
+  "mensagem": "Especificacao não encontrado com id: 1",
+  "path": "/api/veiculos/2/especificacoes/1",
+  "timestamp": "2026-05-14T20:48:40",
+  "campos": null
+}
+```
+
+---
+
+**Veículo inexistente — `GET /api/veiculos/999`**
+
+Response `404 Not Found`:
+```json
+{
+  "status": 404,
+  "erro": "Recurso não encontrado",
+  "mensagem": "Veiculo não encontrado com id: 999",
+  "path": "/api/veiculos/999",
+  "timestamp": "2026-05-14T20:32:39",
+  "campos": null
+}
+```
+
+---
+
+**Usuário inexistente — `GET /api/usuarios/999`**
+
+Response `404 Not Found`:
+```json
+{
+  "status": 404,
+  "erro": "Recurso não encontrado",
+  "mensagem": "Usuario não encontrado com id: 999",
+  "path": "/api/usuarios/999",
+  "timestamp": "2026-05-14T20:57:03",
+  "campos": null
+}
+```
+
+---
+
 ## Testes
 
 O projeto conta com **101 testes unitários** organizados em suite, cobrindo services, domain, security e exception handling. Os testes usam **JUnit 5** e **Mockito** — nenhum deles toca o banco de dados.
@@ -507,10 +1352,10 @@ Ou diretamente pelo IntelliJ clicando com o botão direito em `SuiteDeTestesGera
 
 | Pacote | Classes de Teste | Testes |
 |---|---|---|
-| `service` | UsuarioServiceTest, VeiculoServiceTest, EspecificacaoServiceTest, ConsultaServiceTest | 38 |
-| `domain` | UsuarioTest, VeiculoTest, EspecificacaoTest, ConsultaTest | 33 |
-| `exception` | GlobalExceptionHandlerTest | 11 |
-| `security` | JwtServiceTest | 11 |
+| `service` | UsuarioServiceTest, VeiculoServiceTest, EspecificacaoServiceTest, ConsultaServiceTest | 42 |
+| `domain` | UsuarioTest, VeiculoTest, EspecificacaoTest, ConsultaTest | 36 |
+| `exception` | GlobalExceptionHandlerTest | 10 |
+| `security` | JwtServiceTest | 13 |
 | **Total** | **10 classes** | **101 testes** |
 
 ### O que é testado
