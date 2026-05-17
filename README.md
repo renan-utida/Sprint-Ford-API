@@ -11,9 +11,10 @@ API REST para gerenciamento de veículos concorrentes e suas especificações t�
 - [Contexto](#contexto)
 - [Stack Tecnológica](#stack-tecnológica)
 - [Arquitetura](#arquitetura)
+- [Decisões Técnicas](#decisões-técnicas)
 - [Estrutura de Pacotes](#estrutura-de-pacotes)
 - [Como Rodar](#como-rodar)
-- [Variáveis de Ambiente](#variáveis-de-ambiente)
+- [Configuração do Projeto](#configuração-do-projeto)
 - [Banco de Dados](#banco-de-dados)
 - [Endpoints](#endpoints)
 - [Autenticação](#autenticação)
@@ -21,6 +22,8 @@ API REST para gerenciamento de veículos concorrentes e suas especificações t�
 - [Segurança](#segurança)
 - [Credenciais de Teste](#credenciais-de-teste)
 - [Documentação Swagger](#documentação-swagger)
+- [Validação dos Endpoints](#validação-dos-endpoints)
+- [Testes](#testes)
 
 ---
 
@@ -99,8 +102,8 @@ Camadas transversais que suportam todas as outras:
 |---|---|
 | `config/` | Configuração de segurança, Swagger e CORS |
 | `security/` | Filtro JWT, geração e validação de tokens |
-| `exception/` | Tratamento centralizado de erros — nunca expõe stack trace |
-| `dto/` | Objetos de entrada e saída da API — separa domínio da apresentação |
+| `exception/` | Tratamento centralizado de erros - nunca expõe stack trace |
+| `dto/` | Objetos de entrada e saída da API - separa domínio da apresentação |
 
 ---
 
@@ -108,11 +111,11 @@ Camadas transversais que suportam todas as outras:
 
 ### Arquitetura em Camadas em vez de Hexagonal ou Microsserviços
 
-A Arquitetura em Camadas foi escolhida por ser o padrão ensinado em sala e por atender plenamente aos critérios de SOA da Sprint — separação clara entre apresentação, serviço e dados. Hexagonal adicionaria complexidade de ports e adapters desnecessária para o escopo. Microsserviços estaria completamente fora de escopo para uma entrega com prazo curto.
+A Arquitetura em Camadas foi escolhida por ser o padrão ensinado em sala e por atender plenamente aos critérios de SOA da Sprint - separação clara entre apresentação, serviço e dados. Hexagonal adicionaria complexidade de ports e adapters desnecessária para o escopo. Microsserviços estaria completamente fora de escopo para uma entrega com prazo curto.
 
 ### JWT em vez de Session
 
-A API é stateless por design — cada requisição carrega sua própria autenticação no header `Authorization: Bearer`. Isso elimina a necessidade de armazenar estado de sessão no servidor, facilita o consumo por clientes mobile (React Native) e é o padrão para APIs REST modernas. O token carrega o email e o role do usuário, permitindo que o app mobile leia as permissões sem requisição extra.
+A API é stateless por design - cada requisição carrega sua própria autenticação no header `Authorization: Bearer`. Isso elimina a necessidade de armazenar estado de sessão no servidor, facilita o consumo por clientes mobile (React Native) e é o padrão para APIs REST modernas. O token carrega o email e o role do usuário, permitindo que o app mobile leia as permissões sem requisição extra.
 
 ### Enum para Marca e Role
 
@@ -120,15 +123,15 @@ Usar `MarcaVeiculo` e `RoleUsuario` como enums resolve automaticamente dois prob
 
 ### Soft Delete em vez de Hard Delete
 
-Veículos e usuários nunca são deletados fisicamente — apenas marcados com `ativo = false`. Isso preserva o histórico de consultas: se um veículo fosse deletado do banco, todas as consultas vinculadas a ele perderiam a referência por causa das Foreign Keys. O soft delete garante integridade referencial e auditoria completa.
+Veículos e usuários nunca são deletados fisicamente - apenas marcados com `ativo = false`. Isso preserva o histórico de consultas: se um veículo fosse deletado do banco, todas as consultas vinculadas a ele perderiam a referência por causa das Foreign Keys. O soft delete garante integridade referencial e auditoria completa.
 
 ### Flyway para Migrações
 
-O controle de schema via Flyway garante que qualquer desenvolvedor que clonar o projeto terá o banco idêntico ao de produção após o primeiro startup — sem necessidade de scripts manuais. Cada migration é versionada e imutável, tornando o histórico do schema rastreável pelo Git.
+O controle de schema via Flyway garante que qualquer desenvolvedor que clonar o projeto terá o banco idêntico ao de produção após o primeiro startup - sem necessidade de scripts manuais. Cada migration é versionada e imutável, tornando o histórico do schema rastreável pelo Git.
 
 ### spring-dotenv para Variáveis de Ambiente
 
-Em vez de configurar variáveis de ambiente manualmente no sistema operacional ou no IntelliJ, o `spring-dotenv` lê o arquivo `.env` automaticamente na inicialização. Isso simplifica o onboarding de novos desenvolvedores — basta copiar o `.env.example`, preencher as credenciais e rodar o projeto.
+Em vez de configurar variáveis de ambiente manualmente no sistema operacional ou no IntelliJ, o `spring-dotenv` lê o arquivo `.env` automaticamente na inicialização. Isso simplifica o onboarding de novos desenvolvedores - basta copiar o `.env.example`, preencher as credenciais e rodar o projeto.
 
 ---
 
@@ -212,7 +215,7 @@ cp .env.example .env
 
 3. Preencha o `.env` com as variáveis necessárias (veja a seção abaixo).
 
-4. O projeto usa **spring-dotenv** — o arquivo `.env` é lido automaticamente pelo Spring na inicialização. Não é necessário configurar variáveis de ambiente manualmente no IntelliJ ou no sistema operacional.
+4. O projeto usa **spring-dotenv** - o arquivo `.env` é lido automaticamente pelo Spring na inicialização. Não é necessário configurar variáveis de ambiente manualmente no IntelliJ ou no sistema operacional.
 
    Para trocar de perfil, basta editar o `.env`:
 ```env
@@ -246,15 +249,27 @@ SPRING_PROFILE=prod
 
 ---
 
-## Variáveis de Ambiente
+## Configuração do Projeto
 
-Copie `.env.example` para `.env` e preencha:
+### Variáveis de Ambiente
+
+O projeto usa **spring-dotenv** — o arquivo `.env` é lido automaticamente pelo Spring na inicialização. Não é necessário configurar variáveis de ambiente manualmente no IntelliJ ou no sistema operacional.
+
+**1. Copie o arquivo de exemplo (`.env.example`) para `.env`:**
+```bash
+cp .env.example .env
+```
+
+**2. Preencha o `.env` com suas credenciais:**
 
 ```env
+# Projeto SpecRadar — Variáveis de Ambiente
+# Copie este arquivo para .env e preencha os valores
+
 # Perfil ativo: dev ou prod
 SPRING_PROFILE=dev
 
-# Oracle FIAP (necessário só em prod)
+# Oracle (necessário em prod)
 ORACLE_URL=jdbc:oracle:thin:@oracle.fiap.com.br:1521:orcl
 ORACLE_USER=seu_rm_aqui
 ORACLE_PASSWORD=sua_senha_aqui
@@ -266,11 +281,308 @@ JWT_EXPIRATION=28800000
 # Servidor
 SERVER_PORT=8080
 
-# CORS
+# CORS — separar múltiplas origens por vírgula
 CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8081,exp://localhost:8081
 ```
 
-> O arquivo `.env` está no `.gitignore` e nunca deve ser commitado.
+**3. Gere o JWT_SECRET:**
+
+O `JWT_SECRET` precisa ter no mínimo 256 bits (32 bytes) para o algoritmo HS256. Gere uma chave segura com o comando:
+
+```bash
+openssl rand -base64 64
+```
+
+Cole o resultado no campo `JWT_SECRET` do `.env`:
+```env
+JWT_SECRET=sua_chave_gerada_aqui
+```
+
+> O arquivo `.env` está no `.gitignore` e **nunca deve ser commitado**. Apenas o `.env.example` vai para o repositório.
+
+---
+
+### application.properties
+
+Configurações globais compartilhadas entre todos os perfis:
+
+```properties
+# APLICACAO
+spring.application.name=specradar
+server.port=${SERVER_PORT:8080}
+
+# Profile ativo (trocar para prod ao subir no Oracle)
+spring.profiles.active=${SPRING_PROFILE:dev}
+
+# JWT
+# Chave secreta - mínimo 256 bits para HS256
+jwt.secret=${JWT_SECRET}
+jwt.expiration=${JWT_EXPIRATION:28800000}
+
+# SWAGGER / OPENAPI
+springdoc.swagger-ui.path=/swagger-ui.html
+springdoc.swagger-ui.display-request-duration=true
+springdoc.swagger-ui.operationsSorter=alpha
+springdoc.swagger-ui.tagsSorter=alpha
+springdoc.api-docs.path=/v3/api-docs
+
+# FLYWAY
+spring.flyway.enabled=true
+
+# CORS
+cors.allowed-origins=${CORS_ALLOWED_ORIGINS:http://localhost:3000,http://localhost:8081}
+
+# Jackson
+spring.jackson.deserialization.fail-on-unknown-properties=false
+spring.jackson.mapper.accept-case-insensitive-enums=true
+
+# JPA
+spring.jpa.open-in-view=false
+```
+
+---
+
+### application-dev.properties
+
+Perfil de desenvolvimento com **H2 em memória** — banco zerado a cada restart:
+
+```properties
+# BANCO H2 (DEV)
+spring.datasource.url=jdbc:h2:mem:specradar;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;NON_KEYWORDS=VALUE
+spring.datasource.driver-class-name=org.h2.Driver
+spring.datasource.username=Ford
+spring.datasource.password=Fiap2026
+
+# JPA
+spring.jpa.hibernate.ddl-auto=none
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true
+
+# H2 CONSOLE — acessível em http://localhost:8080/h2-console
+spring.h2.console.enabled=true
+spring.h2.console.path=/h2-console
+
+# FLYWAY
+spring.flyway.url=jdbc:h2:mem:specradar;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;NON_KEYWORDS=VALUE
+spring.flyway.user=Ford
+spring.flyway.password=Fiap2026
+spring.flyway.locations=classpath:db/migration
+```
+
+---
+
+### application-prod.properties
+
+Perfil de produção com **Oracle FIAP** — dados persistidos entre sessões:
+
+```properties
+# BANCO ORACLE (PROD)
+spring.datasource.url=${ORACLE_URL}
+spring.datasource.username=${ORACLE_USER}
+spring.datasource.password=${ORACLE_PASSWORD}
+spring.datasource.driver-class-name=oracle.jdbc.OracleDriver
+
+# JPA
+spring.jpa.database-platform=org.hibernate.dialect.OracleDialect
+spring.jpa.hibernate.ddl-auto=none
+spring.jpa.show-sql=false
+spring.jpa.properties.hibernate.format_sql=false
+
+# FLYWAY
+spring.flyway.url=${ORACLE_URL}
+spring.flyway.user=${ORACLE_USER}
+spring.flyway.password=${ORACLE_PASSWORD}
+spring.flyway.locations=classpath:db/migration
+spring.flyway.baseline-on-migrate=true
+spring.flyway.baseline-version=0
+spring.flyway.out-of-order=true
+```
+
+---
+
+### pom.xml — Configuração Maven
+
+```xml
+   <properties>
+		<java.version>21</java.version>
+		<jjwt.version>0.12.6</jjwt.version>
+		<springdoc.version>2.8.9</springdoc.version>
+		<bucket4j.version>8.10.1</bucket4j.version>
+		<flyway.version>11.8.2</flyway.version>
+		<lombok.version>1.18.38</lombok.version>
+	</properties>
+
+	<dependencies>
+
+		<!-- WEB / REST -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-web</artifactId>
+		</dependency>
+
+		<!-- SEGURANÇA -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-security</artifactId>
+		</dependency>
+
+		<!-- JPA / BANCO -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+		</dependency>
+
+		<!-- VALIDAÇÃO -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-validation</artifactId>
+		</dependency>
+
+		<!-- DEV TOOLS -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-devtools</artifactId>
+			<scope>runtime</scope>
+			<optional>true</optional>
+		</dependency>
+
+		<!-- BANCO DE DADOS -->
+		<dependency>
+			<groupId>com.oracle.database.jdbc</groupId>
+			<artifactId>ojdbc11</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>com.h2database</groupId>
+			<artifactId>h2</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+
+		<!-- FLYWAY (core + Oracle) -->
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-core</artifactId>
+			<version>${flyway.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.flywaydb</groupId>
+			<artifactId>flyway-database-oracle</artifactId>
+			<version>${flyway.version}</version>
+		</dependency>
+
+		<!-- JWT -->
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-api</artifactId>
+			<version>${jjwt.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-impl</artifactId>
+			<version>${jjwt.version}</version>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-jackson</artifactId>
+			<version>${jjwt.version}</version>
+			<scope>runtime</scope>
+		</dependency>
+
+		<!-- SWAGGER / OPENAPI -->
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>${springdoc.version}</version>
+		</dependency>
+
+		<!-- RATE LIMITING -->
+		<dependency>
+			<groupId>com.bucket4j</groupId>
+			<artifactId>bucket4j-core</artifactId>
+			<version>${bucket4j.version}</version>
+		</dependency>
+
+		<!-- LOMBOK -->
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<optional>true</optional>
+		</dependency>
+
+		<!-- TESTES -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- DOTENV — lê o .env automaticamente -->
+		<dependency>
+			<groupId>me.paulschwarz</groupId>
+			<artifactId>spring-dotenv</artifactId>
+			<version>4.0.0</version>
+		</dependency>
+
+		<!-- Suite de Testes -->
+		<dependency>
+			<groupId>org.junit.platform</groupId>
+			<artifactId>junit-platform-suite</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<excludes>
+						<exclude>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+						</exclude>
+					</excludes>
+				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<configuration>
+					<source>21</source>
+					<target>21</target>
+					<annotationProcessorPaths>
+						<path>
+							<groupId>org.projectlombok</groupId>
+							<artifactId>lombok</artifactId>
+							<version>${lombok.version}</version>
+						</path>
+					</annotationProcessorPaths>
+				</configuration>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<configuration>
+					<argLine>
+						-XX:+EnableDynamicAgentLoading
+						-Xshare:off
+					</argLine>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+```
 
 ---
 
@@ -417,12 +729,12 @@ O Insomnia importa todos os endpoints automaticamente com autenticação Bearer 
 |---|---|
 | Autenticação | JWT com expiração de 8 horas e assinatura HS256 |
 | Autorização | RBAC com roles `ADMIN` e `ANALISTA` |
-| Senhas | BCrypt com custo 12 — nunca armazenadas em texto plano |
+| Senhas | BCrypt com custo 12 - nunca armazenadas em texto plano |
 | Validação de entrada | Bean Validation (`@NotBlank`, `@Size`, `@Email`, `@Min`, `@Max`) |
-| Normalização de parâmetros | Enums para `marca` e `role` — valores inválidos retornam 400 |
+| Normalização de parâmetros | Enums para `marca` e `role` - valores inválidos retornam 400 |
 | Proteção contra payloads grandes | `@Size` com limite máximo em todos os campos String |
-| Erros seguros | `GlobalExceptionHandler` — nunca expõe stack trace ou tecnologia |
-| CORS | Origens configuradas via variável de ambiente — nunca `*` |
+| Erros seguros | `GlobalExceptionHandler` - nunca expõe stack trace ou tecnologia |
+| CORS | Origens configuradas via variável de ambiente - nunca `*` |
 | Rate limiting | Bucket4j por IP |
 | HTTPS | Configurado via variável de ambiente em prod |
 | Isolamento de dados | ANALISTA acessa apenas as próprias consultas |
@@ -500,7 +812,7 @@ Todos os endpoints foram testados via **Swagger UI** e **Insomnia** nos perfis `
 
 ### Autenticação
 
-**Login como ADMIN — `POST /api/auth/login`**
+**Login como ADMIN - `POST /api/auth/login`**
 
 Request:
 ```json
@@ -521,7 +833,7 @@ Response `200 OK`:
 
 ---
 
-**Login como ANALISTA — `POST /api/auth/login`**
+**Login como ANALISTA - `POST /api/auth/login`**
 
 Request:
 ```json
@@ -557,7 +869,7 @@ Response `200 OK`:
 
 ---
 
-**Cadastrar veículo — `POST /api/veiculos`**
+**Cadastrar veículo - `POST /api/veiculos`**
 
 Request:
 ```json
@@ -584,7 +896,7 @@ Response `201 Created`:
 
 ---
 
-**Buscar veículo por ID — `GET /api/veiculos/4`**
+**Buscar veículo por ID - `GET /api/veiculos/4`**
 
 Response `200 OK`:
 ```json
@@ -601,7 +913,7 @@ Response `200 OK`:
 
 ---
 
-**Filtrar por marca — `GET /api/veiculos?marca=TOYOTA`**
+**Filtrar por marca - `GET /api/veiculos?marca=TOYOTA`**
 
 Response `200 OK`:
 ```json
@@ -620,13 +932,13 @@ Response `200 OK`:
 
 ---
 
-**Desativar veículo — `DELETE /api/veiculos/5`**
+**Desativar veículo - `DELETE /api/veiculos/5`**
 
-Response `204 No Content` — sem body.
+Response `204 No Content` - sem body.
 
 ---
 
-**Listar veículos ativos — `GET /api/veiculos`**
+**Listar veículos ativos - `GET /api/veiculos`**
 
 Response `200 OK`:
 ```json
@@ -672,7 +984,7 @@ Response `200 OK`:
 
 ---
 
-**Listar todos os veículos incluindo inativos — `GET /api/veiculos/todos`**
+**Listar todos os veículos incluindo inativos - `GET /api/veiculos/todos`**
 
 Response `200 OK`:
 ```json
@@ -709,7 +1021,7 @@ Response `200 OK`:
 
 ---
 
-**Reativar veículo — `PATCH /api/veiculos/5/reativar`**
+**Reativar veículo - `PATCH /api/veiculos/5/reativar`**
 
 Response `200 OK`:
 ```json
@@ -726,7 +1038,7 @@ Response `200 OK`:
 
 ---
 
-**Atualizar veículo — `PUT /api/veiculos/5`**
+**Atualizar veículo - `PUT /api/veiculos/5`**
 
 Request:
 ```json
@@ -765,7 +1077,7 @@ Response `200 OK`:
 
 ---
 
-**Listar especificações — `GET /api/veiculos/4/especificacoes`**
+**Listar especificações - `GET /api/veiculos/4/especificacoes`**
 
 Exibe todas as outras especificacoes relacionadas ao veículo de ID = 4, vou apenas deixar uma aqui exibindo
 
@@ -793,7 +1105,7 @@ Response `200 OK`:
 
 ---
 
-**Cadastrar especificação — `POST /api/veiculos/5/especificacoes`**
+**Cadastrar especificação - `POST /api/veiculos/5/especificacoes`**
 
 Request:
 ```json
@@ -826,7 +1138,7 @@ Response `201 Created`:
 
 ---
 
-**Buscar especificação por ID — `GET /api/veiculos/4/especificacoes/9`**
+**Buscar especificação por ID - `GET /api/veiculos/4/especificacoes/9`**
 
 Response `200 OK`:
 ```json
@@ -849,7 +1161,7 @@ Response `200 OK`:
 
 ---
 
-**Atualizar especificação — `PUT /api/veiculos/1/especificacoes/2`**
+**Atualizar especificação - `PUT /api/veiculos/1/especificacoes/2`**
 
 Request:
 ```json
@@ -882,13 +1194,13 @@ Response `200 OK`:
 
 ---
 
-**Deletar especificação — `DELETE /api/veiculos/5/especificacoes/23`**
+**Deletar especificação - `DELETE /api/veiculos/5/especificacoes/23`**
 
-Response `204 No Content` — sem body.
+Response `204 No Content` - sem body.
 
 ---
 
-**Especificação marcada como não disponível — `POST /api/veiculos/1/especificacoes`**
+**Especificação marcada como não disponível - `POST /api/veiculos/1/especificacoes`**
 
 Request:
 ```json
@@ -930,7 +1242,7 @@ Response `201 Created`:
 
 ---
 
-**Consultas como ADMIN — `GET /api/consultas`**
+**Consultas como ADMIN - `GET /api/consultas`**
 
 Response `200 OK`:
 ```json
@@ -958,7 +1270,7 @@ Response `200 OK`:
 
 ---
 
-**Consultas como ANALISTA — `GET /api/consultas`**
+**Consultas como ANALISTA - `GET /api/consultas`**
 
 É possível verificar apenas as suas consultas, não é possível verificar consultas do ADMIN
 
@@ -992,7 +1304,7 @@ Response `200 OK`:
 
 ---
 
-**Listar usuários — `GET /api/usuarios`**
+**Listar usuários - `GET /api/usuarios`**
 
 Response `200 OK`:
 ```json
@@ -1018,7 +1330,7 @@ Response `200 OK`:
 
 ---
 
-**Buscar usuário por ID — `GET /api/usuarios/2`**
+**Buscar usuário por ID - `GET /api/usuarios/2`**
 
 Response `200 OK`:
 ```json
@@ -1034,7 +1346,7 @@ Response `200 OK`:
 
 ---
 
-**Atualizar usuário — `PUT /api/usuarios/2`**
+**Atualizar usuário - `PUT /api/usuarios/2`**
 
 Request:
 ```json
@@ -1060,7 +1372,7 @@ Response `200 OK`:
 
 ---
 
-**Criar usuário — `POST /api/usuarios`**
+**Criar usuário - `POST /api/usuarios`**
 
 Request:
 ```json
@@ -1086,13 +1398,13 @@ Response `201 Created`:
 
 ---
 
-**Desativar usuário — `DELETE /api/usuarios/3`**
+**Desativar usuário - `DELETE /api/usuarios/3`**
 
-Response `204 No Content` — sem body.
+Response `204 No Content` - sem body.
 
 ---
 
-**Reativar usuário — `PATCH /api/usuarios/3/reativar`**
+**Reativar usuário - `PATCH /api/usuarios/3/reativar`**
 
 Response `200 OK`:
 ```json
@@ -1126,7 +1438,7 @@ Response `200 OK`:
 
 ---
 
-**ANALISTA tentando criar veículo — `POST /api/veiculos`**
+**ANALISTA tentando criar veículo - `POST /api/veiculos`**
 
 Response `403 Forbidden`:
 ```json
@@ -1141,7 +1453,7 @@ Response `403 Forbidden`:
 
 ---
 
-**Sem token — `GET /api/veiculos`**
+**Sem token - `GET /api/veiculos`**
 
 Response `401 Unauthorized`:
 ```json
@@ -1156,7 +1468,7 @@ Response `401 Unauthorized`:
 
 ---
 
-**Login com senha errada — `POST /api/auth/login`**
+**Login com senha errada - `POST /api/auth/login`**
 
 Request:
 ```json
@@ -1187,14 +1499,14 @@ Response `401 Unauthorized`:
 | Cadastrar veículo com body vazio | 400 com todos os campos | ✅ |
 | Cadastrar veículo com ano inválido (`2300`) | 400 com campo `ano` | ✅ |
 | Cadastrar veículo com modelo em branco | 400 com campo `modelo` | ✅ |
-| Cadastrar veículo com modelo muito longo (+100 chars) | 400 — previne buffer overflow | ✅ |
+| Cadastrar veículo com modelo muito longo (+100 chars) | 400 - previne buffer overflow | ✅ |
 | Registrar usuário com role inválida (`GERENTE`) | 400 identificando o campo | ✅ |
 | Registrar usuário com email duplicado | 400 com mensagem clara | ✅ |
 | Registrar usuário com campos faltando | 400 com lista de campos | ✅ |
 
 ---
 
-**Marca inválida — `POST /api/veiculos`**
+**Marca inválida - `POST /api/veiculos`**
 
 Request:
 ```json
@@ -1220,7 +1532,7 @@ Response `400 Bad Request`:
 
 ---
 
-**Body vazio — `POST /api/veiculos`**
+**Body vazio - `POST /api/veiculos`**
 
 Request:
 ```json
@@ -1246,7 +1558,7 @@ Response `400 Bad Request`:
 
 ---
 
-**Email duplicado — `POST /api/usuarios`**
+**Email duplicado - `POST /api/usuarios`**
 
 Request:
 ```json
@@ -1278,14 +1590,14 @@ Response `400 Bad Request`:
 |---|---|---|
 | Buscar veículo com ID inexistente | 404 com mensagem | ✅ |
 | Buscar spec com ID inexistente | 404 com mensagem | ✅ |
-| Acessar spec com veículo errado | 404 — impede acesso cruzado | ✅ |
-| Deletar spec de outro veículo | 404 — impede acesso cruzado | ✅ |
+| Acessar spec com veículo errado | 404 - impede acesso cruzado | ✅ |
+| Deletar spec de outro veículo | 404 - impede acesso cruzado | ✅ |
 | Buscar usuário inexistente | 404 com mensagem | ✅ |
 | Atualizar veículo inexistente | 404 com mensagem | ✅ |
 
 ---
 
-**Segurança de pertencimento — `GET /api/veiculos/2/especificacoes/1`**
+**Segurança de pertencimento - `GET /api/veiculos/2/especificacoes/1`**
 
 A spec `id=1` pertence ao veículo `id=1`. Acessar via veículo `id=2` retorna:
 
@@ -1303,7 +1615,7 @@ Response `404 Not Found`:
 
 ---
 
-**Veículo inexistente — `GET /api/veiculos/999`**
+**Veículo inexistente - `GET /api/veiculos/999`**
 
 Response `404 Not Found`:
 ```json
@@ -1319,7 +1631,7 @@ Response `404 Not Found`:
 
 ---
 
-**Usuário inexistente — `GET /api/usuarios/999`**
+**Usuário inexistente - `GET /api/usuarios/999`**
 
 Response `404 Not Found`:
 ```json
@@ -1337,7 +1649,33 @@ Response `404 Not Found`:
 
 ## Testes
 
-O projeto conta com **101 testes unitários** organizados em suite, cobrindo services, domain, security e exception handling. Os testes usam **JUnit 5** e **Mockito** — nenhum deles toca o banco de dados.
+O projeto conta com **101 testes unitários** organizados em suite, cobrindo services, domain, security e exception handling. Os testes usam **JUnit 5** e **Mockito** - nenhum deles toca o banco de dados, podendo ser executados com o servidor parado ou rodando.
+
+### Arquitetura de Testes
+
+```
+SuiteDeTestesGeral
+├── service/ (42 testes)
+│   ├── UsuarioServiceTest (11)
+│   ├── VeiculoServiceTest (12)
+│   ├── EspecificacaoServiceTest (11)
+│   └── ConsultaServiceTest (8)
+│
+├── domain/ (36 testes)
+│   ├── UsuarioTest (13)
+│   ├── VeiculoTest (7)
+│   ├── EspecificacaoTest (9)
+│   └── ConsultaTest (7)
+│
+├── security/ (13 testes)
+│   └── JwtServiceTest (13)
+│
+└── exception/ (10 testes)
+    └── GlobalExceptionHandlerTest (10)
+
+TOTAL: 101 testes automatizados
+Nenhum teste interfere no banco de dados
+```
 
 ### Como rodar
 
@@ -1346,24 +1684,32 @@ Rodar a suite completa via Maven:
 mvn test
 ```
 
+Ou rodar individualmente:
+```bash
+# Pacote específico
+mvn test -Dtest="br.com.ford.specradar.service.*Test"
+mvn test -Dtest="br.com.ford.specradar.domain.*Test"
+
+# Teste individual
+mvn test -Dtest="VeiculoServiceTest"
+mvn test -Dtest="JwtServiceTest"
+```
+
 Ou diretamente pelo IntelliJ clicando com o botão direito em `SuiteDeTestesGeral` → `Run`.
-
-### Cobertura por pacote
-
-| Pacote | Classes de Teste | Testes |
-|---|---|---|
-| `service` | UsuarioServiceTest, VeiculoServiceTest, EspecificacaoServiceTest, ConsultaServiceTest | 42 |
-| `domain` | UsuarioTest, VeiculoTest, EspecificacaoTest, ConsultaTest | 36 |
-| `exception` | GlobalExceptionHandlerTest | 10 |
-| `security` | JwtServiceTest | 13 |
-| **Total** | **10 classes** | **101 testes** |
 
 ### O que é testado
 
-- Regras de negócio dos services — cenários de sucesso e de erro
-- Entidades de domínio — construtores, campos, `UserDetails` e relacionamentos
-- Tratamento de exceções — códigos HTTP, mensagens seguras e campos inválidos
-- JWT — geração, extração de claims, validação e expiração de token
+- **Services** - regras de negócio, cenários de sucesso e de erro, validação de pertencimento
+- **Domain** - construtores, campos, `UserDetails`, relacionamentos entre entidades
+- **Security** - geração de token JWT, extração de claims, validação e expiração
+- **Exception** - códigos HTTP corretos, mensagens seguras sem stack trace, campos inválidos
+
+### Destaque dos testes
+
+- **Isolamento total** - Mockito mocka todos os repositories, zero acesso ao banco
+- **Cenários de segurança** - token inválido, acesso cruzado entre veículos e specs, RBAC
+- **Erros semânticos** - 400, 401, 403, 404 e 500 validados individualmente
+- **JWT completo** - geração, extração de email e role, expiração de 8 horas
 
 ---
 
@@ -1384,6 +1730,6 @@ Ou diretamente pelo IntelliJ clicando com o botão direito em `SuiteDeTestesGera
 - **Professor:** Salatiel Marinho (SOA) e Vitor Miguel Lasse (Cyber)
 - **Challenge:** FORD
 
-**SpecRadar — FIAP 3ESPW**
+**SpecRadar - FIAP 3ESPW**
 
 **[⬆ Voltar ao topo](#specradar-api)**
