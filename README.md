@@ -147,7 +147,7 @@ br.com.ford.specradar
 
 1. Clone o repositório:
 ```bash
-git clone https://github.com/seu-usuario/Sprint-Ford-API.git
+git clone https://github.com/renan-utida/Sprint-Ford-API.git
 cd Sprint-Ford-API
 ```
 
@@ -158,8 +158,16 @@ cp .env.example .env
 
 3. Preencha o `.env` com as variáveis necessárias (veja a seção abaixo).
 
-4. Preencha as variáveis de ambiente e adicione o SPRING_PROFILE como `dev`:
-`SPRING_PROFILE=dev`
+4. O projeto usa **spring-dotenv** — o arquivo `.env` é lido automaticamente pelo Spring na inicialização. Não é necessário configurar variáveis de ambiente manualmente no IntelliJ ou no sistema operacional.
+
+   Para trocar de perfil, basta editar o `.env`:
+```env
+   # Dev (H2 em memória)
+   SPRING_PROFILE=dev
+
+   # Prod (Oracle FIAP)
+   SPRING_PROFILE=prod
+```
 
 5. Rode a aplicação - o perfil `dev` é o padrão:
 ```bash
@@ -425,6 +433,38 @@ A especificação OpenAPI 3.0 em formato JSON está disponível em:
 ```
 http://localhost:8080/v3/api-docs
 ```
+
+---
+
+## Testes
+
+O projeto conta com **101 testes unitários** organizados em suite, cobrindo services, domain, security e exception handling. Os testes usam **JUnit 5** e **Mockito** — nenhum deles toca o banco de dados.
+
+### Como rodar
+
+Rodar a suite completa via Maven:
+```bash
+mvn test
+```
+
+Ou diretamente pelo IntelliJ clicando com o botão direito em `SuiteDeTestesGeral` → `Run`.
+
+### Cobertura por pacote
+
+| Pacote | Classes de Teste | Testes |
+|---|---|---|
+| `service` | UsuarioServiceTest, VeiculoServiceTest, EspecificacaoServiceTest, ConsultaServiceTest | 38 |
+| `domain` | UsuarioTest, VeiculoTest, EspecificacaoTest, ConsultaTest | 33 |
+| `exception` | GlobalExceptionHandlerTest | 11 |
+| `security` | JwtServiceTest | 11 |
+| **Total** | **10 classes** | **101 testes** |
+
+### O que é testado
+
+- Regras de negócio dos services — cenários de sucesso e de erro
+- Entidades de domínio — construtores, campos, `UserDetails` e relacionamentos
+- Tratamento de exceções — códigos HTTP, mensagens seguras e campos inválidos
+- JWT — geração, extração de claims, validação e expiração de token
 
 ---
 
