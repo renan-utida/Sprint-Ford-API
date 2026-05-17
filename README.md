@@ -55,26 +55,80 @@ O SpecRadar resolve esse problema oferecendo uma API estruturada onde analistas 
 O projeto segue **Arquitetura em Camadas (Layered Architecture)**:
 
 ```
-┌────────────────────────────────────────────┐
-│            Presentation Layer              │
-│   AuthController  VeiculoController        │
-│   EspecificacaoController                  │
-│   ConsultaController UsuarioController     │
-├────────────────────────────────────────────┤
-│             Business Layer                 │
-│   UsuarioService   VeiculoService          │
-│   EspecificacaoService ConsultaService     │
-├────────────────────────────────────────────┤
-│               Data Layer                   │
-│   UsuarioRepository VeiculoRepository      │
-│   EspecificacaoRepository                  │
-│   ConsultaRepository                       │
-├────────────────────────────────────────────┤
-│               Domain Layer                 │
-│   Usuario  Veiculo  Especificacao          │
-│   Consulta  MarcaVeiculo(E) RoleUsuario(E) │
-└────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────┐
+│               Presentation Layer                 │
+│                                                  │
+│  AuthController      VeiculoController           │
+│  EspecificacaoController                         │
+│  ConsultaController  UsuarioController           │
+│                                                  │
+│  Recebe as requisições HTTP e delega             │
+│  para a camada de negócio                        │
+├──────────────────────────────────────────────────┤
+│                Business Layer                    │
+│                                                  │
+│  UsuarioService      VeiculoService              │
+│  EspecificacaoService                            │
+│  ConsultaService                                 │
+│                                                  │
+│  Contém todas as regras de negócio               │
+│  e orquestra as operações                        │
+├──────────────────────────────────────────────────┤
+│                  Data Layer                      │
+│                                                  │
+│  UsuarioRepository   VeiculoRepository           │
+│  EspecificacaoRepository                         │
+│  ConsultaRepository                              │
+│                                                  │
+│  Abstrai o acesso ao banco de dados              │
+│  via Spring Data JPA                             │
+├──────────────────────────────────────────────────┤
+│                 Domain Layer                     │
+│                                                  │
+│  Usuario    Veiculo    Especificacao             │
+│  Consulta   MarcaVeiculo(E)   RoleUsuario(E)     │
+│                                                  │
+│  Entidades JPA e enums que representam           │
+│  o modelo de negócio da solução                  │
+└──────────────────────────────────────────────────┘
+(E) = Enum
 ```
+Camadas transversais que suportam todas as outras:
+
+| Camada | Responsabilidade |
+|---|---|
+| `config/` | Configuração de segurança, Swagger e CORS |
+| `security/` | Filtro JWT, geração e validação de tokens |
+| `exception/` | Tratamento centralizado de erros — nunca expõe stack trace |
+| `dto/` | Objetos de entrada e saída da API — separa domínio da apresentação |
+
+---
+
+## Decisões Técnicas
+
+### Arquitetura em Camadas em vez de Hexagonal ou Microsserviços
+
+A Arquitetura em Camadas foi escolhida por ser o padrão ensinado em sala e por atender plenamente aos critérios de SOA da Sprint — separação clara entre apresentação, serviço e dados. Hexagonal adicionaria complexidade de ports e adapters desnecessária para o escopo.
+
+### JWT em vez de Session
+
+A API é stateless por design — cada requisição carrega sua própria autenticação no header `Authorization: Bearer`. Isso elimina a necessidade de armazenar estado de sessão no servidor, facilita o consumo por clientes mobile (React Native) e é o padrão para APIs REST modernas. O token carrega o email e o role do usuário, permitindo que o app mobile leia as permissões sem requisição extra.
+
+### Enum para Marca e Role
+
+Usar `MarcaVeiculo` e `RoleUsuario` como enums resolve automaticamente dois problemas: normalização de entrada (`"toyota"`, `"Toyota"` e `"TOYOTA"` são tratados como o mesmo valor com `accept-case-insensitive-enums=true`) e validação implícita (valores fora do enum retornam 400 sem nenhum código extra). O professor de Cybersecurity apontou isso explicitamente como boa prática para o Desafio 1.
+
+### Soft Delete em vez de Hard Delete
+
+Veículos e usuários nunca são deletados fisicamente — apenas marcados com `ativo = false`. Isso preserva o histórico de consultas: se um veículo fosse deletado do banco, todas as consultas vinculadas a ele perderiam a referência por causa das Foreign Keys. O soft delete garante integridade referencial e auditoria completa.
+
+### Flyway para Migrações
+
+O controle de schema via Flyway garante que qualquer desenvolvedor que clonar o projeto terá o banco idêntico ao de produção após o primeiro startup — sem necessidade de scripts manuais. Cada migration é versionada e imutável, tornando o histórico do schema rastreável pelo Git.
+
+### spring-dotenv para Variáveis de Ambiente
+
+Em vez de configurar variáveis de ambiente manualmente no sistema operacional ou no IntelliJ, o `spring-dotenv` lê o arquivo `.env` automaticamente na inicialização. Isso simplifica o onboarding de novos desenvolvedores — basta copiar o `.env.example`, preencher as credenciais e rodar o projeto.
 
 ---
 
