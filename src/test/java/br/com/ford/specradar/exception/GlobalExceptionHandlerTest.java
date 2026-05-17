@@ -15,7 +15,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
-@DisplayName("Testes — GlobalExceptionHandler")
+@DisplayName("Testes - GlobalExceptionHandler")
 public class GlobalExceptionHandlerTest {
 
     private GlobalExceptionHandler handler;
@@ -40,12 +40,14 @@ public class GlobalExceptionHandlerTest {
                 handler.handleResourceNotFound(ex, request);
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-        assertNotNull(response.getBody());
-        assertEquals(404, response.getBody().getStatus());
-        assertEquals("Recurso não encontrado", response.getBody().getErro());
-        assertTrue(response.getBody().getMensagem().contains("99"));
-        assertEquals("/api/veiculos", response.getBody().getPath());
-        assertNotNull(response.getBody().getTimestamp());
+
+        var body = response.getBody();
+        assertNotNull(body);
+        assertEquals(404, body.getStatus());
+        assertEquals("Recurso não encontrado", body.getErro());
+        assertTrue(body.getMensagem().contains("99"));
+        assertEquals("/api/veiculos", body.getPath());
+        assertNotNull(body.getTimestamp());
     }
 
     @Test
@@ -57,9 +59,10 @@ public class GlobalExceptionHandlerTest {
         ResponseEntity<GlobalExceptionHandler.ErroResponse> response =
                 handler.handleResourceNotFound(ex, request);
 
+        var body = response.getBody();
+        assertNotNull(body);
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-        assertEquals("Recurso não encontrado com critério especial",
-                response.getBody().getMensagem());
+        assertEquals("Recurso não encontrado com critério especial", body.getMensagem());
     }
 
     // 400 MethodArgumentNotValidException
@@ -80,15 +83,15 @@ public class GlobalExceptionHandlerTest {
         ResponseEntity<GlobalExceptionHandler.ErroResponse> response =
                 handler.handleValidacao(ex, request);
 
+        var body = response.getBody();
+        assertNotNull(body);
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertEquals(400, response.getBody().getStatus());
-        assertEquals("Erro de validação", response.getBody().getErro());
-        assertEquals("Um ou mais campos são inválidos",
-                response.getBody().getMensagem());
-        assertNotNull(response.getBody().getCampos());
-        assertTrue(response.getBody().getCampos().containsKey("modelo"));
-        assertEquals("Modelo é obrigatório",
-                response.getBody().getCampos().get("modelo"));
+        assertEquals(400, body.getStatus());
+        assertEquals("Erro de validação", body.getErro());
+        assertEquals("Um ou mais campos são inválidos", body.getMensagem());
+        assertNotNull(body.getCampos());
+        assertTrue(body.getCampos().containsKey("modelo"));
+        assertEquals("Modelo é obrigatório", body.getCampos().get("modelo"));
     }
 
     // 400 IllegalArgumentException
@@ -102,11 +105,12 @@ public class GlobalExceptionHandlerTest {
         ResponseEntity<GlobalExceptionHandler.ErroResponse> response =
                 handler.handleIllegalArgument(ex, request);
 
+        var body = response.getBody();
+        assertNotNull(body);
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertEquals(400, response.getBody().getStatus());
-        assertEquals("Requisição inválida", response.getBody().getErro());
-        assertEquals("Email já cadastrado: admin@specradar.com",
-                response.getBody().getMensagem());
+        assertEquals(400, body.getStatus());
+        assertEquals("Requisição inválida", body.getErro());
+        assertEquals("Email já cadastrado: admin@specradar.com", body.getMensagem());
     }
 
     @Test
@@ -118,8 +122,10 @@ public class GlobalExceptionHandlerTest {
         ResponseEntity<GlobalExceptionHandler.ErroResponse> response =
                 handler.handleIllegalArgument(ex, request);
 
+        var body = response.getBody();
+        assertNotNull(body);
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertTrue(response.getBody().getMensagem().contains("já está ativo"));
+        assertTrue(body.getMensagem().contains("já está ativo"));
     }
 
     // 403 AccessDeniedException
@@ -130,12 +136,13 @@ public class GlobalExceptionHandlerTest {
         ResponseEntity<GlobalExceptionHandler.ErroResponse> response =
                 handler.handleAccessDenied(request);
 
+        var body = response.getBody();
+        assertNotNull(body);
         assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
-        assertEquals(403, response.getBody().getStatus());
-        assertEquals("Acesso negado", response.getBody().getErro());
-        assertEquals("Você não tem permissão para acessar este recurso",
-                response.getBody().getMensagem());
-        assertEquals("/api/veiculos", response.getBody().getPath());
+        assertEquals(403, body.getStatus());
+        assertEquals("Acesso negado", body.getErro());
+        assertEquals("Você não tem permissão para acessar este recurso", body.getMensagem());
+        assertEquals("/api/veiculos", body.getPath());
     }
 
     // 401 AuthenticationException
@@ -146,32 +153,34 @@ public class GlobalExceptionHandlerTest {
         ResponseEntity<GlobalExceptionHandler.ErroResponse> response =
                 handler.handleAuthentication(request);
 
+        var body = response.getBody();
+        assertNotNull(body);
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
-        assertEquals(401, response.getBody().getStatus());
-        assertEquals("Não autenticado", response.getBody().getErro());
-        assertEquals("Credenciais inválidas ou token ausente",
-                response.getBody().getMensagem());
+        assertEquals(401, body.getStatus());
+        assertEquals("Não autenticado", body.getErro());
+        assertEquals("Credenciais inválidas ou token ausente", body.getMensagem());
     }
 
     // 500 Exception genérica
 
     @Test
-    @DisplayName("Deve retornar 500 para Exception generica sem expor stack trace")
+    @DisplayName("Deve retornar 500 sem expor detalhes internos")
     public void testHandleGenerico() {
         Exception ex = new RuntimeException("Erro interno detalhado - não deve aparecer");
 
         ResponseEntity<GlobalExceptionHandler.ErroResponse> response =
                 handler.handleGenerico(ex, request);
 
+        var body = response.getBody();
+        assertNotNull(body);
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
-        assertEquals(500, response.getBody().getStatus());
-        assertEquals("Erro interno do servidor", response.getBody().getErro());
-
-        // Garante que o detalhe interno NÃO aparece na resposta
-        assertFalse(response.getBody().getMensagem()
-                .contains("Erro interno detalhado"));
-        assertEquals("Ocorreu um erro inesperado. Tente novamente mais tarde.",
-                response.getBody().getMensagem());
+        assertEquals(500, body.getStatus());
+        assertEquals("Erro interno do servidor", body.getErro());
+        assertFalse(body.getMensagem().contains("Erro interno detalhado"));
+        assertEquals(
+                "Ocorreu um erro inesperado. Tente novamente mais tarde.",
+                body.getMensagem()
+        );
     }
 
     // ErroResponse
@@ -185,7 +194,9 @@ public class GlobalExceptionHandlerTest {
         ResponseEntity<GlobalExceptionHandler.ErroResponse> response =
                 handler.handleResourceNotFound(ex, request);
 
-        assertNotNull(response.getBody().getTimestamp());
+        var body = response.getBody();
+        assertNotNull(body);
+        assertNotNull(body.getTimestamp());
     }
 
     @Test
@@ -199,6 +210,8 @@ public class GlobalExceptionHandlerTest {
         ResponseEntity<GlobalExceptionHandler.ErroResponse> response =
                 handler.handleResourceNotFound(ex, request);
 
-        assertEquals("/api/usuarios/99", response.getBody().getPath());
+        var body = response.getBody();
+        assertNotNull(body);
+        assertEquals("/api/usuarios/99", body.getPath());
     }
 }
