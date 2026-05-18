@@ -138,58 +138,102 @@ Em vez de configurar variáveis de ambiente manualmente no sistema operacional o
 ## Estrutura de Pacotes
 
 ```
-br.com.ford.specradar
-├── config/
-│   ├── SecurityConfig.java
-│   ├── SwaggerConfig.java
-│   └── CorsConfig.java
-├── controller/
-│   ├── AuthController.java
-│   ├── VeiculoController.java
-│   ├── EspecificacaoController.java
-│   ├── ConsultaController.java
-│   └── UsuarioController.java
-├── domain/
-│   ├── enums/
-│   │   ├── MarcaVeiculo.java
-│   │   └── RoleUsuario.java
-│   ├── Usuario.java
-│   ├── Veiculo.java
-│   ├── Especificacao.java
-│   └── Consulta.java
-├── dto/
-│   ├── request/
-│   │   ├── LoginRequest.java
-│   │   ├── UsuarioRequest.java
-│   │   ├── VeiculoRequest.java
-│   │   ├── EspecificacaoRequest.java
-│   │   └── ConsultaRequest.java
-│   └── response/
-│       ├── TokenResponse.java
-│       ├── UsuarioResponse.java
-│       ├── VeiculoResponse.java
-│       ├── EspecificacaoResponse.java
-│       └── ConsultaResponse.java
-├── exception/
-│   ├── GlobalExceptionHandler.java
-│   └── ResourceNotFoundException.java
-├── repository/
-│   ├── UsuarioRepository.java
-│   ├── VeiculoRepository.java
-│   ├── EspecificacaoRepository.java
-│   └── ConsultaRepository.java
-├── security/
-│   ├── JwtService.java
-│   ├── JwtFilter.java
-│   └── UserDetailsServiceImpl.java
-├── service/
-│   ├── UsuarioService.java
-│   ├── VeiculoService.java
-│   ├── EspecificacaoService.java
-│   └── ConsultaService.java
-└── SpecradarApplication.java
+Sprint-Ford-API/
+│
+├── src/main/java/br/com/ford/specradar/
+│   │
+│   ├── config/                                          # Configurações globais da aplicação
+│   │   ├── SecurityConfig.java                          	# Regras de autenticação, RBAC e filtros JWT
+│   │   ├── SwaggerConfig.java                           	# Documentação OpenAPI e esquema Bearer
+│   │   └── CorsConfig.java                              	# Origens permitidas via variável de ambiente
+│   │
+│   ├── controller/                                      # Endpoints REST - recebe e responde requisições HTTP
+│   │   ├── AuthController.java                          	# POST /api/auth/login - autenticação pública
+│   │   ├── VeiculoController.java                       	# CRUD de veículos + registro automático de consulta
+│   │   ├── EspecificacaoController.java                 	# CRUD de especificações técnicas por veículo
+│   │   ├── ConsultaController.java                      	# Histórico de consultas com isolamento por perfil
+│   │   └── UsuarioController.java                       	# CRUD de usuários - apenas ADMIN
+│   │
+│   ├── domain/                                          # Entidades JPA e enums do modelo de negócio
+│   │   ├── enums/                                       	# Tipos enumerados para normalização de dados
+│   │   │   ├── MarcaVeiculo.java                        		# Enum com marcas suportadas (FORD, TOYOTA, etc.)
+│   │   │   └── RoleUsuario.java                         		# Enum de perfis de acesso (ADMIN, ANALISTA)
+│   │   ├── Usuario.java                                 	# Entidade ford_usuarios - implementa UserDetails
+│   │   ├── Veiculo.java                                 	# Entidade ford_veiculos - soft delete com ativo
+│   │   ├── Especificacao.java                           	# Entidade ford_especificacoes - ManyToOne Veiculo
+│   │   └── Consulta.java                                	# Entidade ford_consultas - auditoria de acessos
+│   │
+│   ├── dto/                                             # Objetos de transferência - separa domínio da API
+│   │   ├── request/                                     	# DTOs de entrada com Bean Validation
+│   │   │   ├── LoginRequest.java                        		# email + senha para autenticação
+│   │   │   ├── UsuarioRequest.java                      		# nome, email, senha, role para criar/atualizar
+│   │   │   ├── VeiculoRequest.java                      		# marca, modelo, versao, ano para criar/atualizar
+│   │   │   ├── EspecificacaoRequest.java                		# atributo, valor, unidade, disponivel
+│   │   │   └── ConsultaRequest.java                     		# veiculoId para registrar consulta manual
+│   │   └── response/                                    	# DTOs de saída - nunca expõem senha ou dados internos
+│   │       ├── TokenResponse.java                       		# token JWT + tipo + expiraEm
+│   │       ├── UsuarioResponse.java                     		# id, nome, email, role, ativo, criadoEm
+│   │       ├── VeiculoResponse.java                     		# id, marca, modelo, versao, ano, ativo, criadoEm
+│   │       ├── EspecificacaoResponse.java               		# spec + objeto VeiculoInfo aninhado
+│   │       └── ConsultaResponse.java                    		# nomeUsuario, emailUsuario, marca, modelo, realizadaEm
+│   │
+│   ├── exception/                                       # Tratamento centralizado de erros
+│   │   ├── GlobalExceptionHandler.java                  	# @RestControllerAdvice - nunca expõe stack trace
+│   │   └── ResourceNotFoundException.java               	# Runtime exception para recursos não encontrados (404)
+│   │
+│   ├── repository/                                      # Acesso ao banco via Spring Data JPA
+│   │   ├── UsuarioRepository.java                       	# findByEmail, existsByEmail
+│   │   ├── VeiculoRepository.java                       	# findByAtivoTrue, findByMarcaAndAtivoTrue
+│   │   ├── EspecificacaoRepository.java                 	# findByVeiculoId, findByVeiculoIdAndDisponivelTrue
+│   │   └── ConsultaRepository.java                      	# findByUsuarioId, findByVeiculoId
+│   │
+│   ├── security/                                        # Autenticação e autorização JWT
+│   │   ├── JwtService.java                              	# Geração, extração de claims e validação de tokens
+│   │   ├── JwtFilter.java                               	# OncePerRequestFilter - intercepta e autentica JWT
+│   │   └── UserDetailsServiceImpl.java                  	# Carrega usuário do banco pelo email
+│   │
+│   ├── service/                                         # Regras de negócio - camada intermediária
+│   │   ├── UsuarioService.java                          	# Criar, atualizar, desativar, reativar usuários
+│   │   ├── VeiculoService.java                          	# CRUD + listarAtivos, listarTodos, reativar
+│   │   ├── EspecificacaoService.java                    	# CRUD + validação de pertencimento ao veículo
+│   │   └── ConsultaService.java                         	# Registrar e listar consultas com isolamento
+│   │
+│   └── SpecradarApplication.java                        # Entry point - banner adaptativo por perfil
+│
+├── src/main/resources/
+│   ├── application.properties                           # Configurações globais compartilhadas entre perfis
+│   ├── application-dev.properties                       # Perfil dev - H2 em memória + H2 Console
+│   ├── application-prod.properties                      # Perfil prod - Oracle FIAP via variáveis de ambiente
+│   └── db/migration/                                    # Migrations Flyway versionadas e imutáveis
+│       ├── V1__create_usuarios.sql                      	# Criação da tabela ford_usuarios
+│       ├── V2__create_veiculos.sql                      	# Criação da tabela ford_veiculos
+│       ├── V3__create_especificacoes.sql                	# Criação da tabela ford_especificacoes
+│       ├── V4__create_consultas.sql                     	# Criação da tabela ford_consultas
+│       ├── V5__insert_dados_iniciais.sql                	# 2 usuários + 3 veículos concorrentes com specs
+│       └── V6__insert_ranger_raptor.sql                 	# Ford Ranger Raptor 2025 com 14 especificações
+│
+├── src/test/java/br/com/ford/specradar/               # Testes unitários - zero acesso ao banco
+│   ├── SuiteDeTestesGeral.java                          # Suite principal - agrupa todos os pacotes de teste
+│   ├── service/                                         # Testes das regras de negócio com Mockito
+│   │   ├── UsuarioServiceTest.java                      	# 11 testes - criar, atualizar, desativar, reativar
+│   │   ├── VeiculoServiceTest.java                      	# 12 testes - listar, buscar, CRUD, reativar
+│   │   ├── EspecificacaoServiceTest.java                	# 11 testes - CRUD + pertencimento ao veículo
+│   │   └── ConsultaServiceTest.java                     	# 8 testes - registrar + isolamento por usuário
+│   ├── domain/                                          # Testes das entidades JPA
+│   │   ├── UsuarioTest.java                             	# 13 testes - UserDetails, authorities, isEnabled
+│   │   ├── VeiculoTest.java                             	# 7 testes - builder, marcas, listas
+│   │   ├── EspecificacaoTest.java                       	# 9 testes - disponivel, unidade, pertencimento
+│   │   └── ConsultaTest.java                            	# 7 testes - relacionamentos, isolamento
+│   ├── security/                                        # Testes do JWT
+│   │   └── JwtServiceTest.java                          	# 13 testes - gerar, extrair claims, validar, expirar
+│   └── exception/                                       # Testes do tratamento de erros
+│       └── GlobalExceptionHandlerTest.java              	# 10 testes - 400, 401, 403, 404, 500
+│
+├── .env.example                                     # Template de variáveis de ambiente
+├── .gitignore                                       # .env e application-prod.properties excluídos
+├── pom.xml                                          # Dependências Maven + plugins Surefire e Compiler
+└── README.md                                        # Documentação completa do projeto
 ```
-
 ---
 
 ## Como Rodar
@@ -253,7 +297,7 @@ SPRING_PROFILE=prod
 
 ### Variáveis de Ambiente
 
-O projeto usa **spring-dotenv** — o arquivo `.env` é lido automaticamente pelo Spring na inicialização. Não é necessário configurar variáveis de ambiente manualmente no IntelliJ ou no sistema operacional.
+O projeto usa **spring-dotenv** - o arquivo `.env` é lido automaticamente pelo Spring na inicialização. Não é necessário configurar variáveis de ambiente manualmente no IntelliJ ou no sistema operacional.
 
 **1. Copie o arquivo de exemplo (`.env.example`) para `.env`:**
 ```bash
@@ -263,7 +307,7 @@ cp .env.example .env
 **2. Preencha o `.env` com suas credenciais:**
 
 ```env
-# Projeto SpecRadar — Variáveis de Ambiente
+# Projeto SpecRadar - Variáveis de Ambiente
 # Copie este arquivo para .env e preencha os valores
 
 # Perfil ativo: dev ou prod
@@ -274,14 +318,14 @@ ORACLE_URL=jdbc:oracle:thin:@oracle.fiap.com.br:1521:orcl
 ORACLE_USER=seu_rm_aqui
 ORACLE_PASSWORD=sua_senha_aqui
 
-# JWT — gere com: openssl rand -base64 64
+# JWT - gere com: openssl rand -base64 64
 JWT_SECRET=
 JWT_EXPIRATION=28800000
 
 # Servidor
 SERVER_PORT=8080
 
-# CORS — separar múltiplas origens por vírgula
+# CORS - separar múltiplas origens por vírgula
 CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8081,exp://localhost:8081
 ```
 
@@ -344,7 +388,7 @@ spring.jpa.open-in-view=false
 
 ### application-dev.properties
 
-Perfil de desenvolvimento com **H2 em memória** — banco zerado a cada restart:
+Perfil de desenvolvimento com **H2 em memória** - banco zerado a cada restart:
 
 ```properties
 # BANCO H2 (DEV)
@@ -358,7 +402,7 @@ spring.jpa.hibernate.ddl-auto=none
 spring.jpa.show-sql=true
 spring.jpa.properties.hibernate.format_sql=true
 
-# H2 CONSOLE — acessível em http://localhost:8080/h2-console
+# H2 CONSOLE - acessível em http://localhost:8080/h2-console
 spring.h2.console.enabled=true
 spring.h2.console.path=/h2-console
 
@@ -373,7 +417,7 @@ spring.flyway.locations=classpath:db/migration
 
 ### application-prod.properties
 
-Perfil de produção com **Oracle FIAP** — dados persistidos entre sessões:
+Perfil de produção com **Oracle FIAP** - dados persistidos entre sessões:
 
 ```properties
 # BANCO ORACLE (PROD)
@@ -400,7 +444,7 @@ spring.flyway.out-of-order=true
 
 ---
 
-### pom.xml — Configuração Maven
+### pom.xml - Configuração Maven
 
 ```xml
    <properties>
@@ -523,7 +567,7 @@ spring.flyway.out-of-order=true
 			<scope>test</scope>
 		</dependency>
 
-		<!-- DOTENV — lê o .env automaticamente -->
+		<!-- DOTENV - lê o .env automaticamente -->
 		<dependency>
 			<groupId>me.paulschwarz</groupId>
 			<artifactId>spring-dotenv</artifactId>
