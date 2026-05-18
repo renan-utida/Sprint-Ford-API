@@ -1,6 +1,8 @@
 package br.com.ford.specradar.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -20,6 +22,8 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
     // 404 — Recurso não encontrado
     @ExceptionHandler(ResourceNotFoundException.class)
@@ -146,8 +150,7 @@ public class GlobalExceptionHandler {
             Exception ex,
             HttpServletRequest request
     ) {
-        // Loga internamente sem expor para o cliente
-        System.err.println("[ERRO INTERNO] " + ex.getClass().getName() + ": " + ex.getMessage());
+        log.error("[ERRO INTERNO] {} : {}", ex.getClass().getName(), ex.getMessage());
 
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)

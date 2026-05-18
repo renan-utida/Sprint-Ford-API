@@ -2,6 +2,8 @@ package br.com.ford.specradar.config;
 
 import br.com.ford.specradar.security.JwtFilter;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -19,13 +21,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import java.time.LocalDateTime;
 import java.util.Map;
-
 
 @Configuration
 @EnableWebSecurity
@@ -33,16 +33,18 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class SecurityConfig {
 
+    private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
+
     private final JwtFilter jwtFilter;
     private final UserDetailsService userDetailsService;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // Desabilita CSRF — API stateless não precisa
+                // Desabilita CSRF - API stateless não precisa
                 .csrf(AbstractHttpConfigurer::disable)
 
-                // Sem sessão — cada requisição é autenticada pelo JWT
+                // Sem sessão - cada requisição é autenticada pelo JWT
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
@@ -71,28 +73,29 @@ public class SecurityConfig {
                                 "/h2-console/**"
                         ).permitAll()
 
-                        // Veículos — GET para ANALISTA e ADMIN com excecao do Listar todos (incluindo inativos) — só ADMIN
+                        // Veículos - GET para ANALISTA e ADMIN com excecao do Listar todos (incluindo inativos) — só ADMIN
                         // O Resto só ADMIN
 
-                        // Listar todos (incluindo inativos) — só ADMIN
+                        // Listar todos (incluindo inativos) - só ADMIN
                         .requestMatchers(HttpMethod.GET, "/api/veiculos/todos").hasRole("ADMIN")
-                        // Demais GETs — ANALISTA e ADMIN
+                        // Demais GETs - ANALISTA e ADMIN
                         .requestMatchers(HttpMethod.GET, "/api/veiculos/**").hasAnyRole("ANALISTA", "ADMIN")
+
                         .requestMatchers(HttpMethod.POST, "/api/veiculos/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/veiculos/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/veiculos/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/api/veiculos/**").hasRole("ADMIN")
 
-                        // Especificações — mesma lógica dos veículos
+                        // Especificações - mesma lógica dos veículos
                         .requestMatchers(HttpMethod.GET, "/api/especificacoes/**").hasAnyRole("ANALISTA", "ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/especificacoes/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.PUT, "/api/especificacoes/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/api/especificacoes/**").hasRole("ADMIN")
 
-                        // Consultas — ANALISTA e ADMIN
+                        // Consultas - ANALISTA e ADMIN
                         .requestMatchers("/api/consultas/**").hasAnyRole("ANALISTA", "ADMIN")
 
-                        // Usuários — só ADMIN
+                        // Usuários - só ADMIN
                         .requestMatchers("/api/usuarios/**").hasRole("ADMIN")
 
                         // Qualquer outra rota exige autenticação
@@ -111,6 +114,9 @@ public class SecurityConfig {
     @Bean
     public AuthenticationEntryPoint authenticationEntryPoint() {
         return (request, response, authException) -> {
+            log.warn("[SEGURANÇA] Tentativa não autenticada em {} — IP: {}",
+                    request.getRequestURI(), request.getRemoteAddr());
+
             response.setStatus(401);
             response.setContentType("application/json;charset=UTF-8");
             Map<String, Object> body = Map.of(
@@ -127,6 +133,9 @@ public class SecurityConfig {
     @Bean
     public AccessDeniedHandler accessDeniedHandler() {
         return (request, response, accessDeniedException) -> {
+            log.warn("[SEGURANÇA] Acesso negado em {} — IP: {}",
+                    request.getRequestURI(), request.getRemoteAddr());
+
             response.setStatus(403);
             response.setContentType("application/json;charset=UTF-8");
             Map<String, Object> body = Map.of(

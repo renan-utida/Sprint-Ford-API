@@ -5,6 +5,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,6 +21,8 @@ import java.io.IOException;
 @Component
 @RequiredArgsConstructor
 public class JwtFilter extends OncePerRequestFilter {
+
+    private static final Logger log = LoggerFactory.getLogger(JwtFilter.class);
 
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
@@ -72,9 +76,10 @@ public class JwtFilter extends OncePerRequestFilter {
             }
 
         } catch (Exception e) {
-            // Token inválido — deixa passar sem autenticar
-            // O Spring Security vai bloquear nos endpoints protegidos
-            logger.warn("Token JWT inválido: " + e.getMessage());
+            log.warn("[SEGURANÇA] Token JWT inválido na requisição {} — IP: {} — motivo: {}",
+                    request.getRequestURI(),
+                    request.getRemoteAddr(),
+                    e.getMessage());
         }
 
         filterChain.doFilter(request, response);

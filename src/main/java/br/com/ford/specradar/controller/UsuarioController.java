@@ -59,9 +59,18 @@ public class UsuarioController {
         return ResponseEntity.noContent().build();
     }
 
-    @Operation(summary = "Reativar usuário", description = "Reativa um usuário desativado — apenas ADMIN")
+    @Operation(summary = "Reativar usuário",
+            description = "Reativa um usuário desativado — apenas ADMIN")
     @PatchMapping("/{id}/reativar")
     public ResponseEntity<UsuarioResponse> reativar(@PathVariable Long id) {
         return ResponseEntity.ok(usuarioService.reativar(id));
+    }
+
+    @Operation(summary = "Anonimizar usuário",
+            description = "Anonimiza dados pessoais de usuário desativado — apenas ADMIN")
+    @PatchMapping("/{id}/anonimizar")
+    public ResponseEntity<Void> anonimizar(@PathVariable Long id) {
+        usuarioService.anonimizar(id);
+        return ResponseEntity.noContent().build();
     }
 }

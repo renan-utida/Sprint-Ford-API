@@ -6,15 +6,20 @@ import br.com.ford.specradar.dto.response.UsuarioResponse;
 import br.com.ford.specradar.exception.ResourceNotFoundException;
 import br.com.ford.specradar.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class UsuarioService {
+
+    private static final Logger log = LoggerFactory.getLogger(UsuarioService.class);
 
     private final UsuarioRepository usuarioRepository;
     private final PasswordEncoder passwordEncoder;
@@ -48,7 +53,10 @@ public class UsuarioService {
                 .ativo(true)
                 .build();
 
-        return UsuarioResponse.fromEntity(usuarioRepository.save(usuario));
+        UsuarioResponse response = UsuarioResponse.fromEntity(usuarioRepository.save(usuario));
+        log.info("[AUDITORIA] Usuário criado — id: {} email: {} role: {}",
+                response.getId(), response.getEmail(), response.getRole());
+        return response;
     }
 
     @Transactional
@@ -67,7 +75,10 @@ public class UsuarioService {
         usuario.setSenha(passwordEncoder.encode(dto.getSenha()));
         usuario.setRole(dto.getRole());
 
-        return UsuarioResponse.fromEntity(usuarioRepository.save(usuario));
+        UsuarioResponse response = UsuarioResponse.fromEntity(usuarioRepository.save(usuario));
+        log.info("[AUDITORIA] Usuário atualizado — id: {} email: {} role: {}",
+                response.getId(), response.getEmail(), response.getRole());
+        return response;
     }
 
     @Transactional
@@ -76,6 +87,8 @@ public class UsuarioService {
                 .orElseThrow(() -> new ResourceNotFoundException("Usuario", id));
         usuario.setAtivo(false);
         usuarioRepository.save(usuario);
+        log.info("[AUDITORIA] Usuário desativado — id: {} email: {}",
+                id, usuario.getEmail());
     }
 
     @Transactional
@@ -88,6 +101,29 @@ public class UsuarioService {
         }
 
         usuario.setAtivo(true);
-        return UsuarioResponse.fromEntity(usuarioRepository.save(usuario));
+        UsuarioResponse response = UsuarioResponse.fromEntity(usuarioRepository.save(usuario));
+        log.info("[AUDITORIA] Usuário reativado — id: {} email: {}",
+                id, usuario.getEmail());
+        return response;
+    }
+
+    @Transactional
+    public void anonimizar(Long id) {
+        Usuario usuario = usuarioRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Usuario", id));
+
+        if (usuario.getAtivo()) {
+            throw new IllegalArgumentException(
+                    "Apenas usuários desativados podem ser anonimizados"
+            );
+        }
+
+        String emailOriginal = usuario.getEmail();
+        usuario.setNome("Usuário Removido");
+        usuario.setEmail("anonimizado_" + id + "@specradar.com");
+        usuario.setSenha(passwordEncoder.encode(UUID.randomUUID().toString()));
+        usuarioRepository.save(usuario);
+        log.info("[AUDITORIA] Usuário anonimizado — id: {} email original: {}",
+                id, emailOriginal);
     }
 }

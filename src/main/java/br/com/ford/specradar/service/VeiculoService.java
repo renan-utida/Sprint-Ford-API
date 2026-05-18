@@ -7,6 +7,8 @@ import br.com.ford.specradar.dto.response.VeiculoResponse;
 import br.com.ford.specradar.exception.ResourceNotFoundException;
 import br.com.ford.specradar.repository.VeiculoRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +17,8 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class VeiculoService {
+
+    private static final Logger log = LoggerFactory.getLogger(VeiculoService.class);
 
     private final VeiculoRepository veiculoRepository;
 
@@ -66,7 +70,11 @@ public class VeiculoService {
                 .ativo(true)
                 .build();
 
-        return VeiculoResponse.fromEntity(veiculoRepository.save(veiculo));
+        VeiculoResponse response = VeiculoResponse.fromEntity(veiculoRepository.save(veiculo));
+        log.info("[AUDITORIA] Veículo cadastrado — id: {} marca: {} modelo: {} versao: {}",
+                response.getId(), response.getMarca(),
+                response.getModelo(), response.getVersao());
+        return response;
     }
 
     @Transactional
@@ -79,7 +87,11 @@ public class VeiculoService {
         veiculo.setVersao(dto.getVersao());
         veiculo.setAno(dto.getAno());
 
-        return VeiculoResponse.fromEntity(veiculoRepository.save(veiculo));
+        VeiculoResponse response = VeiculoResponse.fromEntity(veiculoRepository.save(veiculo));
+        log.info("[AUDITORIA] Veículo atualizado — id: {} marca: {} modelo: {} versao: {}",
+                response.getId(), response.getMarca(),
+                response.getModelo(), response.getVersao());
+        return response;
     }
 
     @Transactional
@@ -88,6 +100,8 @@ public class VeiculoService {
                 .orElseThrow(() -> new ResourceNotFoundException("Veiculo", id));
         veiculo.setAtivo(false);
         veiculoRepository.save(veiculo);
+        log.info("[AUDITORIA] Veículo desativado — id: {} modelo: {}",
+                id, veiculo.getModelo());
     }
 
     @Transactional
@@ -100,6 +114,9 @@ public class VeiculoService {
         }
 
         veiculo.setAtivo(true);
-        return VeiculoResponse.fromEntity(veiculoRepository.save(veiculo));
+        VeiculoResponse response = VeiculoResponse.fromEntity(veiculoRepository.save(veiculo));
+        log.info("[AUDITORIA] Veículo reativado — id: {} modelo: {}",
+                id, veiculo.getModelo());
+        return response;
     }
 }

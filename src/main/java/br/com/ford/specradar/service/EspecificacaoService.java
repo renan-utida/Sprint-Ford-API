@@ -8,6 +8,8 @@ import br.com.ford.specradar.exception.ResourceNotFoundException;
 import br.com.ford.specradar.repository.EspecificacaoRepository;
 import br.com.ford.specradar.repository.VeiculoRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,6 +18,8 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class EspecificacaoService {
+
+    private static final Logger log = LoggerFactory.getLogger(EspecificacaoService.class);
 
     private final EspecificacaoRepository especificacaoRepository;
     private final VeiculoRepository veiculoRepository;
@@ -26,7 +30,6 @@ public class EspecificacaoService {
         if (!veiculoRepository.existsById(veiculoId)) {
             throw new ResourceNotFoundException("Veiculo", veiculoId);
         }
-
         return especificacaoRepository.findByVeiculoId(veiculoId)
                 .stream()
                 .map(EspecificacaoResponse::fromEntity)
@@ -59,9 +62,12 @@ public class EspecificacaoService {
                 .disponivel(dto.getDisponivel())
                 .build();
 
-        return EspecificacaoResponse.fromEntity(
+        EspecificacaoResponse response = EspecificacaoResponse.fromEntity(
                 especificacaoRepository.save(especificacao)
         );
+        log.info("[AUDITORIA] Especificação cadastrada — id: {} veiculoId: {} atributo: {}",
+                response.getId(), veiculoId, response.getAtributo());
+        return response;
     }
 
     @Transactional
@@ -78,9 +84,12 @@ public class EspecificacaoService {
         especificacao.setUnidade(dto.getUnidade());
         especificacao.setDisponivel(dto.getDisponivel());
 
-        return EspecificacaoResponse.fromEntity(
+        EspecificacaoResponse response = EspecificacaoResponse.fromEntity(
                 especificacaoRepository.save(especificacao)
         );
+        log.info("[AUDITORIA] Especificação atualizada — id: {} veiculoId: {} atributo: {}",
+                specId, veiculoId, response.getAtributo());
+        return response;
     }
 
     @Transactional
@@ -93,5 +102,7 @@ public class EspecificacaoService {
         }
 
         especificacaoRepository.delete(especificacao);
+        log.info("[AUDITORIA] Especificação deletada — id: {} veiculoId: {} atributo: {}",
+                specId, veiculoId, especificacao.getAtributo());
     }
 }

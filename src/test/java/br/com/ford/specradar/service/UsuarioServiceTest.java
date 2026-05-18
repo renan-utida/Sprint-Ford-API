@@ -36,6 +36,7 @@ public class UsuarioServiceTest {
 
     private Usuario adminPadrao;
     private Usuario analistaPadrao;
+    private Usuario usuarioDesativado;
     private UsuarioRequest requestPadrao;
 
     @BeforeEach
@@ -57,6 +58,16 @@ public class UsuarioServiceTest {
                 .senha("$2a$12$hash")
                 .role(RoleUsuario.ANALISTA)
                 .ativo(true)
+                .criadoEm(LocalDateTime.now())
+                .build();
+
+        usuarioDesativado = Usuario.builder()
+                .id(3L)
+                .nome("Usuario Desativado")
+                .email("desativado@specradar.com")
+                .senha("$2a$12$hash")
+                .role(RoleUsuario.ANALISTA)
+                .ativo(false)
                 .criadoEm(LocalDateTime.now())
                 .build();
 
@@ -241,6 +252,51 @@ public class UsuarioServiceTest {
                 () -> usuarioService.reativar(2L));
 
         assertTrue(ex.getMessage().contains("já está ativo"));
+        verify(usuarioRepository, never()).save(any());
+    }
+
+    // Anonimizar
+
+    @Test
+    @DisplayName("Deve anonimizar usuário desativado com sucesso")
+    public void testAnonimizarComSucesso() {
+        when(usuarioRepository.findById(3L))
+                .thenReturn(Optional.of(usuarioDesativado));
+        when(passwordEncoder.encode(anyString()))
+                .thenReturn("$2a$12$hashAleatorio");
+        when(usuarioRepository.save(any(Usuario.class)))
+                .thenReturn(usuarioDesativado);
+
+        usuarioService.anonimizar(3L);
+
+        assertEquals("Usuário Removido", usuarioDesativado.getNome());
+        assertEquals("anonimizado_3@specradar.com", usuarioDesativado.getEmail());
+        verify(passwordEncoder, times(1)).encode(anyString());
+        verify(usuarioRepository, times(1)).save(usuarioDesativado);
+    }
+
+    @Test
+    @DisplayName("Deve lançar IllegalArgumentException ao anonimizar usuário ainda ativo")
+    public void testAnonimizarUsuarioAtivo() {
+        when(usuarioRepository.findById(1L))
+                .thenReturn(Optional.of(adminPadrao));
+
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> usuarioService.anonimizar(1L));
+
+        assertTrue(ex.getMessage().contains("desativados"));
+        verify(usuarioRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Deve lançar ResourceNotFoundException ao anonimizar ID inexistente")
+    public void testAnonimizarIdInexistente() {
+        when(usuarioRepository.findById(99L))
+                .thenReturn(Optional.empty());
+
+        assertThrows(ResourceNotFoundException.class,
+                () -> usuarioService.anonimizar(99L));
+
         verify(usuarioRepository, never()).save(any());
     }
 }
