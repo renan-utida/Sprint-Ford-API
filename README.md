@@ -121,45 +121,6 @@ O sistema já vem com dados pré-carregados via Flyway para teste imediato:
 O projeto segue **Arquitetura em Camadas (Layered Architecture)**:
 
 ```
-┌──────────────────────────────────────────────────┐
-│               Presentation Layer                 │
-│                                                  │
-│  AuthController      VeiculoController           │
-│  EspecificacaoController                         │
-│  ConsultaController  UsuarioController           │
-│                                                  │
-│  Recebe as requisições HTTP e delega             │
-│  para a camada de negócio                        │
-├──────────────────────────────────────────────────┤
-│                Business Layer                    │
-│                                                  │
-│  UsuarioService      VeiculoService              │
-│  EspecificacaoService                            │
-│  ConsultaService                                 │
-│                                                  │
-│  Contém todas as regras de negócio               │
-│  e orquestra as operações                        │
-├──────────────────────────────────────────────────┤
-│                  Data Layer                      │
-│                                                  │
-│  UsuarioRepository   VeiculoRepository           │
-│  EspecificacaoRepository                         │
-│  ConsultaRepository                              │
-│                                                  │
-│  Abstrai o acesso ao banco de dados              │
-│  via Spring Data JPA                             │
-├──────────────────────────────────────────────────┤
-│                 Domain Layer                     │
-│                                                  │
-│  Usuario    Veiculo    Especificacao             │
-│  Consulta   MarcaVeiculo(E)   RoleUsuario(E)     │
-│                                                  │
-│  Entidades JPA e enums que representam           │
-│  o modelo de negócio da solução                  │
-└──────────────────────────────────────────────────┘
-(E) = Enum
-```
-```
                     ┌─────────────────────────────────┐
                     │      Cliente / Swagger UI       │
                     └──────────────┬──────────────────┘
