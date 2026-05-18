@@ -248,7 +248,7 @@ Em vez de configurar variáveis de ambiente manualmente no sistema operacional o
 
 ### Padrões REST e JSON
 
-A API segue rigorosamente o padrão **REST** com **JSON** como formato exclusivo de comunicação, tanto para requests quanto para responses, incluindo os erros. Cada endpoint representa um recurso (`/veiculos`, `/especificacoes`, `/consultas`, `/usuarios`) e opera sobre ele via métodos HTTP semânticos. Não há endpoints com verbos no path (`/getVeiculo`, `/createEspecificacao`) — a ação é sempre inferida pelo método HTTP.
+A API segue rigorosamente o padrão **REST** com **JSON** como formato exclusivo de comunicação, tanto para requests quanto para responses, incluindo os erros. Cada endpoint representa um recurso (`/veiculos`, `/especificacoes`, `/consultas`, `/usuarios`) e opera sobre ele via métodos HTTP semânticos. Não há endpoints com verbos no path (`/getVeiculo`, `/createEspecificacao`) - a ação é sempre inferida pelo método HTTP.
 
 ### Modularidade e Reutilização de Serviços
 
@@ -794,6 +794,8 @@ A API expõe **21 endpoints REST** organizados em 5 grupos de recursos. Todos os
 | `DELETE` | Desativação lógica via soft delete - retorna 204 No Content |
 | `PATCH` | Atualização parcial - reativação e anonimização de usuários e veículos |
 
+---
+
 ### Autenticação
 
 | Método | Endpoint | Descrição | Acesso |
@@ -911,10 +913,10 @@ O SpecRadar implementa segurança em múltiplas camadas, atendendo aos 5 critér
 
 **Validação de entradas e sanitização**
 
-Todas as entradas da API são validadas via **Bean Validation** antes de chegarem ao service. SQL Injection é prevenido pelo uso de **Spring Data JPA com queries parametrizadas** — nunca há concatenação de strings SQL. XSS e command injection não são aplicáveis pois a API retorna JSON, não HTML.
+Todas as entradas da API são validadas via **Bean Validation** antes de chegarem ao service. SQL Injection é prevenido pelo uso de **Spring Data JPA com queries parametrizadas** - nunca há concatenação de strings SQL. XSS e command injection não são aplicáveis pois a API retorna JSON, não HTML.
 
 ```java
-// VeiculoRequest.java — validação declarativa nos DTOs de entrada
+// VeiculoRequest.java - validação declarativa nos DTOs de entrada
 @NotNull(message = "Marca é obrigatória")
 private MarcaVeiculo marca;
 
@@ -930,10 +932,10 @@ private Integer ano;
 
 **Normalização e validação de parâmetros de API**
 
-`MarcaVeiculo` e `RoleUsuario` são enums — valores fora do padrão retornam 400 automaticamente. Com `accept-case-insensitive-enums=true`, `"toyota"`, `"Toyota"` e `"TOYOTA"` são todos normalizados para `TOYOTA`.
+`MarcaVeiculo` e `RoleUsuario` são enums - valores fora do padrão retornam 400 automaticamente. Com `accept-case-insensitive-enums=true`, `"toyota"`, `"Toyota"` e `"TOYOTA"` são todos normalizados para `TOYOTA`.
 
 ```java
-// MarcaVeiculo.java — enum garante que apenas valores válidos são aceitos
+// MarcaVeiculo.java - enum garante que apenas valores válidos são aceitos
 public enum MarcaVeiculo {
     FORD, TOYOTA, VOLKSWAGEN, CHEVROLET, FIAT,
     HYUNDAI, NISSAN, MITSUBISHI, JEEP, RAM, MERCEDES
@@ -941,13 +943,13 @@ public enum MarcaVeiculo {
 ```
 
 ```properties
-# application.properties — normalização case-insensitive
+# application.properties - normalização case-insensitive
 spring.jackson.mapper.accept-case-insensitive-enums=true
 ```
 
-**Limitação de tamanho e formato — prevenção de buffer overflow**
+**Limitação de tamanho e formato - prevenção de buffer overflow**
 
-Todos os campos String têm `@Size` com limite máximo definido. Testado e validado — modelo com atributo com +100 caracteres retorna 400:
+Todos os campos String têm `@Size` com limite máximo definido. Testado e validado - modelo com atributo com +100 caracteres retorna 400:
 
 ```java
 // EspecificacaoRequest.java
@@ -965,12 +967,12 @@ private String valor;
 O `GlobalExceptionHandler` intercepta todas as exceções e nunca expõe stack trace, nome de classes ou tecnologia ao cliente:
 
 ```java
-// GlobalExceptionHandler.java — handler genérico
+// GlobalExceptionHandler.java - handler genérico
 @ExceptionHandler(Exception.class)
 public ResponseEntity handleGenerico(
         Exception ex, HttpServletRequest request) {
 
-    // Loga internamente via SLF4J — nunca expõe ao cliente
+    // Loga internamente via SLF4J - nunca expõe ao cliente
     log.error("[ERRO INTERNO] {} : {}", ex.getClass().getName(), ex.getMessage());
 
     return ResponseEntity
@@ -984,7 +986,7 @@ public ResponseEntity handleGenerico(
 }
 ```
 
-Response ao cliente — sem stack trace, sem tecnologia exposta:
+Response ao cliente - sem stack trace, sem tecnologia exposta:
 ```json
 {
   "status": 500,
@@ -1018,10 +1020,10 @@ Para erros de validação, o campo `campos` lista os campos inválidos:
 
 **JWT com expiração, assinatura forte e renovação controlada**
 
-Autenticação via **JWT HS256** com secret gerado por `openssl rand -base64 64` (512 bits — bem acima do mínimo de 256 bits exigido). Expiração padrão de 8 horas configurável via variável de ambiente.
+Autenticação via **JWT HS256** com secret gerado por `openssl rand -base64 64` (512 bits - bem acima do mínimo de 256 bits exigido). Expiração padrão de 8 horas configurável via variável de ambiente.
 
 ```java
-// JwtService.java — geração do token com claims de role e nome
+// JwtService.java - geração do token com claims de role e nome
 public String gerarToken(Usuario usuario) {
     Map claims = new HashMap<>();
     claims.put("role", usuario.getRole().name());
@@ -1038,7 +1040,7 @@ public String gerarToken(Usuario usuario) {
 ```
 
 ```java
-// JwtFilter.java — validação em cada requisição protegida
+// JwtFilter.java - validação em cada requisição protegida
 if (jwtService.isTokenValido(token, userDetails)) {
     UsernamePasswordAuthenticationToken authToken =
             new UsernamePasswordAuthenticationToken(
@@ -1053,7 +1055,7 @@ if (jwtService.isTokenValido(token, userDetails)) {
 Dois perfis com permissões distintas definidas no `SecurityConfig`:
 
 ```java
-// SecurityConfig.java — regras RBAC
+// SecurityConfig.java - regras RBAC
 .requestMatchers(HttpMethod.GET, "/api/veiculos/todos").hasRole("ADMIN")
 .requestMatchers(HttpMethod.GET, "/api/veiculos/**").hasAnyRole("ANALISTA", "ADMIN")
 .requestMatchers(HttpMethod.POST, "/api/veiculos/**").hasRole("ADMIN")
@@ -1076,11 +1078,11 @@ Dois perfis com permissões distintas definidas no `SecurityConfig`:
 
 **HTTPS/TLS**
 
-Configurado via variável de ambiente em produção. Em dev, HTTP é usado localmente — comportamento aceitável para ambiente de desenvolvimento.
+Configurado via variável de ambiente em produção. Em dev, HTTP é usado localmente - comportamento aceitável para ambiente de desenvolvimento.
 
 **Rate limiting e throttling**
 
-Implementado via **Bucket4j** por IP — previne abuso, scraping excessivo e ataques DoS:
+Implementado via **Bucket4j** por IP - previne abuso, scraping excessivo e ataques DoS:
 
 ```xml
 		<dependency>
@@ -1092,7 +1094,7 @@ Implementado via **Bucket4j** por IP — previne abuso, scraping excessivo e ata
 
 **CORS configurado corretamente**
 
-Origens permitidas via variável de ambiente — nunca `*`. Métodos e headers explicitamente listados:
+Origens permitidas via variável de ambiente - nunca `*`. Métodos e headers explicitamente listados:
 
 ```java
 // CorsConfig.java
@@ -1105,7 +1107,7 @@ config.setMaxAge(3600L);
 ```
 
 ```env
-# .env — origens controladas por variável de ambiente
+# .env - origens controladas por variável de ambiente
 CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8081
 ```
 
@@ -1114,7 +1116,7 @@ CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8081
 JWT com assinatura HS256 garante que o token não foi manipulado em trânsito. Token com assinatura incorreta é rejeitado pelo `JwtService`:
 
 ```java
-// JwtService.java — verificação de assinatura
+// JwtService.java - verificação de assinatura
 private Claims extrairTodosClaims(String token) {
     return Jwts.parser()
             .verifyWith(getSecretKey())
@@ -1130,10 +1132,10 @@ private Claims extrairTodosClaims(String token) {
 
 **Criptografia de dados sensíveis em repouso**
 
-Senhas armazenadas com **BCrypt custo 12** — nunca em texto plano. Todo novo usuário criado via API tem a senha encodada antes de persistir:
+Senhas armazenadas com **BCrypt custo 12** - nunca em texto plano. Todo novo usuário criado via API tem a senha encodada antes de persistir:
 
 ```java
-// UsuarioService.java — senha sempre encodada antes de salvar
+// UsuarioService.java - senha sempre encodada antes de salvar
 Usuario usuario = Usuario.builder()
         .nome(dto.getNome())
         .email(dto.getEmail())
@@ -1143,17 +1145,17 @@ Usuario usuario = Usuario.builder()
         .build();
 ```
 
-Evidência no Oracle — coluna `senha` sempre com hash BCrypt:
+Evidência no Oracle - coluna `senha` sempre com hash BCrypt:
 ```
 $2a$12$qe56g7GA45wxn2vRaAsFwu0BBfMCWiBifjIzWJgBs4OOdbATQlExC
 ```
 
 **Política de retenção e descarte seguro**
 
-Implementado via **soft delete** — registros nunca são deletados fisicamente, preservando integridade referencial. Para usuários que precisam ter dados removidos, o endpoint de anonimização sobrescreve os dados pessoais:
+Implementado via **soft delete** - registros nunca são deletados fisicamente, preservando integridade referencial. Para usuários que precisam ter dados removidos, o endpoint de anonimização sobrescreve os dados pessoais:
 
 ```java
-// UsuarioService.java — anonimização de dados pessoais
+// UsuarioService.java - anonimização de dados pessoais
 public void anonimizar(Long id) {
     Usuario usuario = usuarioRepository.findById(id)
             .orElseThrow(() -> new ResourceNotFoundException("Usuario", id));
@@ -1169,22 +1171,22 @@ public void anonimizar(Long id) {
     usuario.setEmail("anonimizado_" + id + "@specradar.com");
     usuario.setSenha(passwordEncoder.encode(UUID.randomUUID().toString()));
     usuarioRepository.save(usuario);
-    log.info("[AUDITORIA] Usuário anonimizado — id: {} email original: {}",
+    log.info("[AUDITORIA] Usuário anonimizado - id: {} email original: {}",
             id, emailOriginal);
 }
 ```
 
 **Anonimização/pseudonimização de dados pessoais**
 
-Endpoint `PATCH /api/usuarios/{id}/anonimizar` — disponível apenas para ADMIN. Após a anonimização o registro preserva o ID para manter FKs mas perde todos os dados pessoais identificáveis.
+Endpoint `PATCH /api/usuarios/{id}/anonimizar` - disponível apenas para ADMIN. Após a anonimização o registro preserva o ID para manter FKs mas perde todos os dados pessoais identificáveis.
 
 **Proteção contra exposição acidental de dados**
 
 - `UsuarioResponse` nunca inclui o campo `senha`
 - `GlobalExceptionHandler` nunca expõe estrutura interna
-- `.env` no `.gitignore` — credenciais nunca vão para o repositório
+- `.env` no `.gitignore` - credenciais nunca vão para o repositório
 - `spring.jpa.open-in-view=false` previne lazy loading inesperado
-- Swagger documentado — nenhum endpoint não documentado
+- Swagger documentado - nenhum endpoint não documentado
 
 ---
 
@@ -1206,11 +1208,11 @@ log.error("[ERRO INTERNO] {} : {}", ex.getClass().getName(), ex.getMessage());
 Tentativas não autenticadas e acessos negados são logados com IP para rastreamento:
 
 ```java
-// SecurityConfig.java — log de tentativas suspeitas com IP
+// SecurityConfig.java - log de tentativas suspeitas com IP
 @Bean
 public AuthenticationEntryPoint authenticationEntryPoint() {
     return (request, response, authException) -> {
-        log.warn("[SEGURANÇA] Tentativa não autenticada em {} — IP: {}",
+        log.warn("[SEGURANÇA] Tentativa não autenticada em {} - IP: {}",
                 request.getRequestURI(), request.getRemoteAddr());
         // ...
     };
@@ -1219,7 +1221,7 @@ public AuthenticationEntryPoint authenticationEntryPoint() {
 @Bean
 public AccessDeniedHandler accessDeniedHandler() {
     return (request, response, accessDeniedException) -> {
-        log.warn("[SEGURANÇA] Acesso negado em {} — IP: {}",
+        log.warn("[SEGURANÇA] Acesso negado em {} - IP: {}",
                 request.getRequestURI(), request.getRemoteAddr());
         // ...
     };
@@ -1227,40 +1229,40 @@ public AccessDeniedHandler accessDeniedHandler() {
 ```
 
 ```java
-// JwtFilter.java — log de token inválido com path e IP
-log.warn("[SEGURANÇA] Token JWT inválido na requisição {} — IP: {} — motivo: {}",
+// JwtFilter.java - log de token inválido com path e IP
+log.warn("[SEGURANÇA] Token JWT inválido na requisição {} - IP: {} - motivo: {}",
         request.getRequestURI(), request.getRemoteAddr(), e.getMessage());
 ```
 
 **Trilha de auditoria para ações críticas**
 
-Registro físico no banco via tabela `ford_consultas` — toda consulta a veículo por ID é auditada automaticamente com usuário, veículo e timestamp. Logs de auditoria em todas as ações críticas de usuários, veículos e especificações:
+Registro físico no banco via tabela `ford_consultas` - toda consulta a veículo por ID é auditada automaticamente com usuário, veículo e timestamp. Logs de auditoria em todas as ações críticas de usuários, veículos e especificações:
 
 ```java
-// UsuarioService.java — logs de auditoria
-log.info("[AUDITORIA] Usuário criado — id: {} email: {} role: {}",
+// UsuarioService.java - logs de auditoria
+log.info("[AUDITORIA] Usuário criado - id: {} email: {} role: {}",
         response.getId(), response.getEmail(), response.getRole());
 
-log.info("[AUDITORIA] Usuário desativado — id: {} email: {}",
+log.info("[AUDITORIA] Usuário desativado - id: {} email: {}",
         id, usuario.getEmail());
 
-log.info("[AUDITORIA] Usuário anonimizado — id: {} email original: {}",
+log.info("[AUDITORIA] Usuário anonimizado - id: {} email original: {}",
         id, emailOriginal);
 ```
 
 ```java
-// VeiculoService.java — logs de auditoria
-log.info("[AUDITORIA] Veículo cadastrado — id: {} marca: {} modelo: {} versao: {}",
+// VeiculoService.java - logs de auditoria
+log.info("[AUDITORIA] Veículo cadastrado - id: {} marca: {} modelo: {} versao: {}",
         response.getId(), response.getMarca(),
         response.getModelo(), response.getVersao());
 ```
 
 ```java
-// EspecificacaoService.java — logs de auditoria
-log.info("[AUDITORIA] Especificação cadastrada — id: {} veiculoId: {} atributo: {}",
+// EspecificacaoService.java - logs de auditoria
+log.info("[AUDITORIA] Especificação cadastrada - id: {} veiculoId: {} atributo: {}",
         response.getId(), veiculoId, response.getAtributo());
 
-log.info("[AUDITORIA] Especificação deletada — id: {} veiculoId: {} atributo: {}",
+log.info("[AUDITORIA] Especificação deletada - id: {} veiculoId: {} atributo: {}",
         specId, veiculoId, especificacao.getAtributo());
 ```
 
@@ -1278,13 +1280,13 @@ log.info("[AUDITORIA] Especificação deletada — id: {} veiculoId: {} atributo
 | Autenticação JWT | HS256, 512 bits, expiração 8h configurável | ✅ |
 | RBAC | `ADMIN` e `ANALISTA` com permissões distintas no `SecurityConfig` | ✅ |
 | Rate limiting | Bucket4j por IP | ✅ |
-| CORS | Origens via variável de ambiente — nunca `*` | ✅ |
+| CORS | Origens via variável de ambiente - nunca `*` | ✅ |
 | Integridade de payload | JWT com assinatura HS256 verificada em cada requisição | ✅ |
-| Senhas em repouso | BCrypt custo 12 — nunca texto plano | ✅ |
+| Senhas em repouso | BCrypt custo 12 - nunca texto plano | ✅ |
 | Retenção e descarte | Soft delete + endpoint de anonimização LGPD | ✅ |
 | Anonimização | `PATCH /api/usuarios/{id}/anonimizar` sobrescreve dados pessoais | ✅ |
 | Proteção de exposição | `UsuarioResponse` sem senha, `.env` no `.gitignore` | ✅ |
-| Logs estruturados | SLF4J em todo o projeto — sem dados sensíveis | ✅ |
+| Logs estruturados | SLF4J em todo o projeto - sem dados sensíveis | ✅ |
 | Monitoramento | Logs de IP em tentativas suspeitas e tokens inválidos | ✅ |
 | Trilha de auditoria | `ford_consultas` no banco + logs `[AUDITORIA]` em services | ✅ |
 
