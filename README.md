@@ -152,7 +152,7 @@ Sprint-Ford-API/
 │   │   ├── VeiculoController.java                       	# CRUD de veículos + registro automático de consulta
 │   │   ├── EspecificacaoController.java                 	# CRUD de especificações técnicas por veículo
 │   │   ├── ConsultaController.java                      	# Histórico de consultas com isolamento por perfil
-│   │   └── UsuarioController.java                       	# CRUD de usuários - apenas ADMIN
+│   │   └── UsuarioController.java       					# CRUD de usuários + anonimização — apenas ADMIN
 │   │
 │   ├── domain/                                          # Entidades JPA e enums do modelo de negócio
 │   │   ├── enums/                                       	# Tipos enumerados para normalização de dados
@@ -193,7 +193,7 @@ Sprint-Ford-API/
 │   │   └── UserDetailsServiceImpl.java                  	# Carrega usuário do banco pelo email
 │   │
 │   ├── service/                                         # Regras de negócio - camada intermediária
-│   │   ├── UsuarioService.java                          	# Criar, atualizar, desativar, reativar usuários
+│   │   ├── UsuarioService.java          					# Criar, atualizar, desativar, reativar, anonimizar usuários
 │   │   ├── VeiculoService.java                          	# CRUD + listarAtivos, listarTodos, reativar
 │   │   ├── EspecificacaoService.java                    	# CRUD + validação de pertencimento ao veículo
 │   │   └── ConsultaService.java                         	# Registrar e listar consultas com isolamento
@@ -215,7 +215,7 @@ Sprint-Ford-API/
 ├── src/test/java/br/com/ford/specradar/               # Testes unitários - zero acesso ao banco
 │   ├── SuiteDeTestesGeral.java                          # Suite principal - agrupa todos os pacotes de teste
 │   ├── service/                                         # Testes das regras de negócio com Mockito
-│   │   ├── UsuarioServiceTest.java                      	# 11 testes - criar, atualizar, desativar, reativar
+│   │   ├── UsuarioServiceTest.java                      	# 14 testes - criar, atualizar, desativar, reativar
 │   │   ├── VeiculoServiceTest.java                      	# 12 testes - listar, buscar, CRUD, reativar
 │   │   ├── EspecificacaoServiceTest.java                	# 11 testes - CRUD + pertencimento ao veículo
 │   │   └── ConsultaServiceTest.java                     	# 8 testes - registrar + isolamento por usuário
@@ -677,6 +677,7 @@ ford_veiculos (1) ──── (N) ford_especificacoes
 | PUT | `/api/usuarios/{id}` | Atualiza usuário | ADMIN |
 | DELETE | `/api/usuarios/{id}` | Desativa usuário | ADMIN |
 | PATCH | `/api/usuarios/{id}/reativar` | Reativa usuário desativado | ADMIN |
+| PATCH | `/api/usuarios/{id}/anonimizar` | Anonimiza dados pessoais de usuário desativado | ADMIN |
 
 ### Veículos
 
@@ -783,6 +784,9 @@ O Insomnia importa todos os endpoints automaticamente com autenticação Bearer 
 | HTTPS | Configurado via variável de ambiente em prod |
 | Isolamento de dados | ANALISTA acessa apenas as próprias consultas |
 | Auditoria | Toda consulta a veículo por ID é registrada com usuário e timestamp |
+| Logs de auditoria | SLF4J registra criação, atualização, desativação e reativação de usuários e veículos |
+| Monitoramento de eventos suspeitos | Tentativas não autenticadas e acessos negados logados com IP via SLF4J |
+| Anonimização de dados pessoais | Endpoint `PATCH /api/usuarios/{id}/anonimizar` sobrescreve nome, email e senha com dados fictícios |
 
 ### Padrão de erros
 
@@ -1345,6 +1349,7 @@ Response `200 OK`:
 | Atualizar usuário | PUT | `/api/usuarios/{id}` | 200 com dados atualizados |
 | Desativar usuário | DELETE | `/api/usuarios/{id}` | 204 sem body |
 | Reativar usuário | PATCH | `/api/usuarios/{id}/reativar` | 200 com usuário reativado |
+| Anonimizar usuário desativado | PATCH | `/api/usuarios/{id}/anonimizar` | 204 sem body |
 
 ---
 
@@ -1458,6 +1463,26 @@ Response `200 OK`:
   "email": "novo@specradar.com",
   "role": "ANALISTA",
   "ativo": true,
+  "criadoEm": "2026-05-14T23:55:00"
+}
+```
+
+---
+
+**Anonimizar usuário desativado - `PATCH /api/usuarios/3/anonimizar`**
+
+> Sobrescreve os dados pessoais do usuário desativado com dados fictícios — atende à política de privacidade e retenção de dados (LGPD).
+
+Response `204 No Content` - sem body.
+
+Após a anonimização, o usuário no banco passa a ter:
+```json
+{
+  "id": 3,
+  "nome": "Usuário Removido",
+  "email": "anonimizado_3@specradar.com",
+  "role": "ANALISTA",
+  "ativo": false,
   "criadoEm": "2026-05-14T23:55:00"
 }
 ```
@@ -1693,14 +1718,14 @@ Response `404 Not Found`:
 
 ## Testes
 
-O projeto conta com **101 testes unitários** organizados em suite, cobrindo services, domain, security e exception handling. Os testes usam **JUnit 5** e **Mockito** - nenhum deles toca o banco de dados, podendo ser executados com o servidor parado ou rodando.
+O projeto conta com **104 testes unitários** organizados em suite, cobrindo services, domain, security e exception handling. Os testes usam **JUnit 5** e **Mockito** - nenhum deles toca o banco de dados, podendo ser executados com o servidor parado ou rodando.
 
 ### Arquitetura de Testes
 
 ```
 SuiteDeTestesGeral
-├── service/ (42 testes)
-│   ├── UsuarioServiceTest (11)
+├── service/ (45 testes)
+│   ├── UsuarioServiceTest (14)
 │   ├── VeiculoServiceTest (12)
 │   ├── EspecificacaoServiceTest (11)
 │   └── ConsultaServiceTest (8)
@@ -1717,7 +1742,7 @@ SuiteDeTestesGeral
 └── exception/ (10 testes)
     └── GlobalExceptionHandlerTest (10)
 
-TOTAL: 101 testes automatizados
+TOTAL: 104 testes automatizados
 Nenhum teste interfere no banco de dados
 ```
 
