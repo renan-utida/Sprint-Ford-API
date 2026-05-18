@@ -2,13 +2,14 @@
 
 **Inteligência Competitiva Automotiva - Ford FIAP 2026**
 
-API REST para gerenciamento de veículos concorrentes e suas especificações técnicas, desenvolvida como parte da Sprint 1 da parceria Ford × FIAP. Permite que analistas da Ford consultem e comparem especificações de veículos concorrentes de forma padronizada, com autenticação JWT e controle de acesso por perfil.
+O **SpecRadar** é uma API REST de inteligência competitiva automotiva desenvolvida para a Ford como parte da Sprint 1 da parceria Ford × FIAP 2026. A solução digitaliza e automatiza o processo de coleta, armazenamento e consulta de especificações técnicas de veículos concorrentes, permitindo que analistas da Ford tomem decisões estratégicas com dados precisos e atualizados em tempo real.
 
 ---
 
 ## Sumário
 
 - [Contexto](#contexto)
+- [Funcionalidades](#funcionalidades)
 - [Stack Tecnológica](#stack-tecnológica)
 - [Arquitetura](#arquitetura)
 - [Decisões Técnicas](#decisões-técnicas)
@@ -29,9 +30,71 @@ API REST para gerenciamento de veículos concorrentes e suas especificações t�
 
 ## Contexto
 
-O Desafio 01 da Ford propõe automatizar a coleta de especificações técnicas de veículos concorrentes - processo que hoje consome aproximadamente **1 hora por versão** de forma manual, com alta probabilidade de imprecisão.
+### O Problema (Desafio 1)
 
-O SpecRadar resolve esse problema oferecendo uma API estruturada onde analistas podem cadastrar, consultar e comparar especificações de veículos concorrentes em formato padronizado, com histórico de consultas e controle de acesso por perfil.
+A Ford enfrenta um desafio operacional crítico no monitoramento competitivo do mercado automotivo brasileiro. Hoje, o processo de coleta de especificações técnicas de veículos concorrentes - como potência, torque, transmissão, preço e equipamentos - é feito **manualmente por analistas**, consultando sites, catálogos e materiais de marketing de cada fabricante.
+
+Esse processo consome aproximadamente **1 hora por versão de veículo**, com alto risco de imprecisão, falta de padronização e dificuldade de comparação entre modelos. Para uma linha completa de concorrentes com dezenas de versões, isso representa dias de trabalho improdutivo e dados desatualizados.
+
+### A Solução
+
+O **SpecRadar** irá resolver esse problema oferecendo uma API centralizada onde toda a inteligência competitiva é armazenada de forma estruturada e acessível. A solução permite:
+
+**Cadastro padronizado de concorrentes** - veículos de marcas como Toyota, Volkswagen, Chevrolet, Jeep e outros são cadastrados com marca, modelo, versão e ano, seguindo um padrão único independente da fonte de dados.
+
+**Especificações técnicas detalhadas** - cada veículo pode ter N especificações cadastradas (Motor, Potência, Torque, Transmissão, Tração, Preço, etc.) com valor, unidade de medida e flag de disponibilidade — útil para marcar specs que o concorrente não divulga oficialmente.
+
+**Histórico de consultas com auditoria** - toda vez que um analista busca um veículo por ID, o sistema registra automaticamente quem consultou, qual veículo e quando. Isso permite rastrear quais concorrentes estão sendo monitorados com mais frequência.
+
+**Controle de acesso por perfil** - analistas acessam apenas leitura e suas próprias consultas. Administradores gerenciam o cadastro completo e têm visibilidade total do sistema.
+
+**Referência própria com a Ranger Raptor** - o sistema inclui a Ford Ranger Raptor 2025 com 14 especificações técnicas completas, permitindo comparação direta com os concorrentes cadastrados.
+
+### Impacto Esperado
+
+Com o SpecRadar, o tempo de consulta de especificações de um veículo concorrente cai de **~1 hora para segundos**. A padronização elimina imprecisões, o histórico de consultas revela padrões de interesse dos analistas, e o controle de acesso garante que apenas pessoas autorizadas alimentam e gerenciam a base de dados competitiva da Ford.
+
+---
+
+## Funcionalidades
+
+### Gestão de Veículos Concorrentes
+- Cadastro de veículos com marca, modelo, versão e ano
+- Filtro por marca para análise focada em um fabricante específico
+- Listagem separada de veículos ativos e inativos (soft delete preserva histórico)
+- Reativação de veículos previamente desativados
+
+### Gestão de Especificações Técnicas
+- Cadastro ilimitado de especificações por veículo (Motor, Potência, Torque, Preço, etc.)
+- Campo `disponivel` para marcar specs que o concorrente não divulga oficialmente
+- Campo `unidade` para padronizar valores numéricos (cv, Nm, s, R$, etc.)
+- Segurança de pertencimento — specs de um veículo não são acessíveis via outro
+- Dados do veículo embutidos na resposta de cada spec para consulta completa sem chamadas extras
+
+### Histórico e Auditoria de Consultas
+- Registro automático de toda consulta a veículo por ID com usuário, veículo e timestamp
+- Isolamento por perfil — analistas veem apenas suas próprias consultas
+- Administradores têm visibilidade completa de todas as consultas do sistema
+- Rastreabilidade de quais concorrentes estão sendo monitorados com mais frequência
+
+### Gestão de Usuários
+- Cadastro de usuários com perfil ADMIN ou ANALISTA
+- Soft delete com opção de reativação
+- Anonimização de dados pessoais de usuários desativados — conformidade com LGPD
+- Senhas armazenadas com BCrypt custo 12 — nunca em texto plano
+
+### Segurança e Controle de Acesso
+- Autenticação via JWT com expiração de 8 horas e assinatura HS256
+- RBAC com dois perfis — ADMIN com acesso total, ANALISTA com acesso restrito à leitura
+- Rate limiting por IP via Bucket4j para prevenção de abuso
+- CORS configurado via variável de ambiente — nunca com origem aberta (`*`)
+- Logs de auditoria para todas as ações críticas — criação, atualização, desativação e reativação
+
+### Dados Iniciais
+O sistema já vem com dados pré-carregados via Flyway para teste imediato:
+- **2 usuários** — um ADMIN e um ANALISTA com credenciais de teste
+- **3 concorrentes** — Toyota Hilux GR-Sport, Volkswagen Amarok V6 Extreme e Chevrolet S10 High Country, todos com specs de Motor, Potência, Torque e Preço
+- **Ford Ranger Raptor 2025** — veículo de referência com **14 especificações técnicas completas** baseadas no material oficial da Ford
 
 ---
 
@@ -96,14 +159,64 @@ O projeto segue **Arquitetura em Camadas (Layered Architecture)**:
 └──────────────────────────────────────────────────┘
 (E) = Enum
 ```
+```
+                    ┌─────────────────────────────────┐
+                    │      Cliente / Swagger UI       │
+                    └──────────────┬──────────────────┘
+                                   │ HTTP Request
+┌──────────────────────────────────▼───────────────────────────────┐
+│                Presentation Layer  (Controller)                  │
+│                                                                  │
+│  AuthController   VeiculoController   EspecificacaoController    │
+│  ConsultaController                   UsuarioController          │
+│                                                                  │
+│  Recebe as requisições HTTP, valida entrada e delega ao service  │
+├──────────────────────────────────┬───────────────────────────────┤
+│          Security / JWT          │           DTO Layer           │
+│  JwtFilter  JwtService           │  Request DTOs (validação)     │
+│  UserDetailsServiceImpl          │  Response DTOs (saída segura) │
+├──────────────────────────────────┴───────────────────────────────┤
+│                  Business Layer (Service)                        │
+│                                                                  │
+│  UsuarioService    VeiculoService    EspecificacaoService        │
+│  ConsultaService                                                 │
+│                                                                  │
+│  Contém todas as regras de negócio e orquestra as operações      │
+├──────────────────────────────────────────────────────────────────┤
+│               	 GlobalExceptionHandler                        │
+│  Intercepta exceções — nunca expõe stack trace ao cliente        │
+├──────────────────────────────────────────────────────────────────┤
+│                   Data Layer (Repository)                        │
+│                                                                  │
+│  UsuarioRepository   VeiculoRepository   EspecificacaoRepository │
+│  ConsultaRepository                                              │
+│                                                                  │
+│  Abstrai o acesso ao banco via Spring Data JPA                   │
+├──────────────────────────────────────────────────────────────────┤
+│                          Domain Layer                            │
+│                                                                  │
+│  Usuario    Veiculo    Especificacao    Consulta                 │
+│  MarcaVeiculo (Enum)   RoleUsuario (Enum)                        │
+│                                                                  │
+│  Entidades JPA e enums que representam o modelo de negócio       │
+├──────────────────────────────────────────────────────────────────┤
+│                   Banco de Dados (via Flyway)                    │
+│                                                                  │
+│  dev: H2 em memória          prod: Oracle 19c (FIAP)             │
+│  												                   │
+│  Tabelas criadas:  ford_usuarios  ford_veiculos                  │
+│  ford_consultas ford_especificacoes                              │
+└──────────────────────────────────────────────────────────────────┘
+```
+
 Camadas transversais que suportam todas as outras:
 
 | Camada | Responsabilidade |
 |---|---|
 | `config/` | Configuração de segurança, Swagger e CORS |
 | `security/` | Filtro JWT, geração e validação de tokens |
-| `exception/` | Tratamento centralizado de erros - nunca expõe stack trace |
-| `dto/` | Objetos de entrada e saída da API - separa domínio da apresentação |
+| `exception/` | Tratamento centralizado de erros — nunca expõe stack trace |
+| `dto/` | Objetos de entrada e saída da API — separa domínio da apresentação |
 
 ---
 
@@ -660,6 +773,18 @@ ford_veiculos (1) ──── (N) ford_especificacoes
 ---
 
 ## Endpoints
+
+A API expõe **21 endpoints REST** organizados em 5 grupos de recursos. Todos os endpoints protegidos exigem autenticação via JWT no header `Authorization: Bearer {token}`. O acesso é controlado por perfil — **ADMIN** tem acesso total e **ANALISTA** tem acesso restrito à leitura de veículos, especificações e suas próprias consultas.
+
+### Uso semântico dos métodos HTTP
+
+| Método | Uso no SpecRadar |
+|---|---|
+| `GET` | Consulta de recursos sem efeitos colaterais |
+| `POST` | Criação de novos recursos — retorna 201 Created |
+| `PUT` | Atualização completa de um recurso existente — retorna 200 OK |
+| `DELETE` | Desativação lógica via soft delete — retorna 204 No Content |
+| `PATCH` | Atualização parcial — reativação e anonimização de usuários e veículos |
 
 ### Autenticação
 
