@@ -42,7 +42,7 @@ O **SpecRadar** irá resolver esse problema oferecendo uma API centralizada onde
 
 **Cadastro padronizado de concorrentes** - veículos de marcas como Toyota, Volkswagen, Chevrolet, Jeep e outros são cadastrados com marca, modelo, versão e ano, seguindo um padrão único independente da fonte de dados.
 
-**Especificações técnicas detalhadas** - cada veículo pode ter N especificações cadastradas (Motor, Potência, Torque, Transmissão, Tração, Preço, etc.) com valor, unidade de medida e flag de disponibilidade — útil para marcar specs que o concorrente não divulga oficialmente.
+**Especificações técnicas detalhadas** - cada veículo pode ter N especificações cadastradas (Motor, Potência, Torque, Transmissão, Tração, Preço, etc.) com valor, unidade de medida e flag de disponibilidade - útil para marcar specs que o concorrente não divulga oficialmente.
 
 **Histórico de consultas com auditoria** - toda vez que um analista busca um veículo por ID, o sistema registra automaticamente quem consultou, qual veículo e quando. Isso permite rastrear quais concorrentes estão sendo monitorados com mais frequência.
 
@@ -68,33 +68,33 @@ Com o SpecRadar, o tempo de consulta de especificações de um veículo concorre
 - Cadastro ilimitado de especificações por veículo (Motor, Potência, Torque, Preço, etc.)
 - Campo `disponivel` para marcar specs que o concorrente não divulga oficialmente
 - Campo `unidade` para padronizar valores numéricos (cv, Nm, s, R$, etc.)
-- Segurança de pertencimento — specs de um veículo não são acessíveis via outro
+- Segurança de pertencimento - specs de um veículo não são acessíveis via outro
 - Dados do veículo embutidos na resposta de cada spec para consulta completa sem chamadas extras
 
 ### Histórico e Auditoria de Consultas
 - Registro automático de toda consulta a veículo por ID com usuário, veículo e timestamp
-- Isolamento por perfil — analistas veem apenas suas próprias consultas
+- Isolamento por perfil - analistas veem apenas suas próprias consultas
 - Administradores têm visibilidade completa de todas as consultas do sistema
 - Rastreabilidade de quais concorrentes estão sendo monitorados com mais frequência
 
 ### Gestão de Usuários
 - Cadastro de usuários com perfil ADMIN ou ANALISTA
 - Soft delete com opção de reativação
-- Anonimização de dados pessoais de usuários desativados — conformidade com LGPD
-- Senhas armazenadas com BCrypt custo 12 — nunca em texto plano
+- Anonimização de dados pessoais de usuários desativados - conformidade com LGPD
+- Senhas armazenadas com BCrypt custo 12 - nunca em texto plano
 
 ### Segurança e Controle de Acesso
 - Autenticação via JWT com expiração de 8 horas e assinatura HS256
-- RBAC com dois perfis — ADMIN com acesso total, ANALISTA com acesso restrito à leitura
+- RBAC com dois perfis - ADMIN com acesso total, ANALISTA com acesso restrito à leitura
 - Rate limiting por IP via Bucket4j para prevenção de abuso
-- CORS configurado via variável de ambiente — nunca com origem aberta (`*`)
-- Logs de auditoria para todas as ações críticas — criação, atualização, desativação e reativação
+- CORS configurado via variável de ambiente - nunca com origem aberta (`*`)
+- Logs de auditoria para todas as ações críticas - criação, atualização, desativação e reativação
 
 ### Dados Iniciais
 O sistema já vem com dados pré-carregados via Flyway para teste imediato:
-- **2 usuários** — um ADMIN e um ANALISTA com credenciais de teste
-- **3 concorrentes** — Toyota Hilux GR-Sport, Volkswagen Amarok V6 Extreme e Chevrolet S10 High Country, todos com specs de Motor, Potência, Torque e Preço
-- **Ford Ranger Raptor 2025** — veículo de referência com **14 especificações técnicas completas** baseadas no material oficial da Ford
+- **2 usuários** - um ADMIN e um ANALISTA com credenciais de teste
+- **3 concorrentes** - Toyota Hilux GR-Sport, Volkswagen Amarok V6 Extreme e Chevrolet S10 High Country, todos com specs de Motor, Potência, Torque e Preço
+- **Ford Ranger Raptor 2025** - veículo de referência com **14 especificações técnicas completas** baseadas no material oficial da Ford
 
 ---
 
@@ -184,7 +184,7 @@ O projeto segue **Arquitetura em Camadas (Layered Architecture)**:
 │  Contém todas as regras de negócio e orquestra as operações      │
 ├──────────────────────────────────────────────────────────────────┤
 │               	 GlobalExceptionHandler                        │
-│  Intercepta exceções — nunca expõe stack trace ao cliente        │
+│  Intercepta exceções - nunca expõe stack trace ao cliente        │
 ├──────────────────────────────────────────────────────────────────┤
 │                   Data Layer (Repository)                        │
 │                                                                  │
@@ -215,8 +215,8 @@ Camadas transversais que suportam todas as outras:
 |---|---|
 | `config/` | Configuração de segurança, Swagger e CORS |
 | `security/` | Filtro JWT, geração e validação de tokens |
-| `exception/` | Tratamento centralizado de erros — nunca expõe stack trace |
-| `dto/` | Objetos de entrada e saída da API — separa domínio da apresentação |
+| `exception/` | Tratamento centralizado de erros - nunca expõe stack trace |
+| `dto/` | Objetos de entrada e saída da API - separa domínio da apresentação |
 
 ---
 
@@ -246,6 +246,14 @@ O controle de schema via Flyway garante que qualquer desenvolvedor que clonar o 
 
 Em vez de configurar variáveis de ambiente manualmente no sistema operacional ou no IntelliJ, o `spring-dotenv` lê o arquivo `.env` automaticamente na inicialização. Isso simplifica o onboarding de novos desenvolvedores - basta copiar o `.env.example`, preencher as credenciais e rodar o projeto.
 
+### Padrões REST e JSON
+
+A API segue rigorosamente o padrão **REST** com **JSON** como formato exclusivo de comunicação, tanto para requests quanto para responses, incluindo os erros. Cada endpoint representa um recurso (`/veiculos`, `/especificacoes`, `/consultas`, `/usuarios`) e opera sobre ele via métodos HTTP semânticos. Não há endpoints com verbos no path (`/getVeiculo`, `/createEspecificacao`) — a ação é sempre inferida pelo método HTTP.
+
+### Modularidade e Reutilização de Serviços
+
+Cada service é independente e responsável por um único domínio de negócio, princípio central do SOA. O `ConsultaService` é um exemplo direto de reutilização: ele é injetado no `VeiculoController` para registrar automaticamente a consulta toda vez que um analista busca um veículo por ID, sem que o `VeiculoService` precise conhecer ou depender da lógica de consultas. Essa separação de responsabilidades garante que cada serviço possa evoluir, ser testado e ser substituído de forma independente.
+
 ---
 
 ## Estrutura de Pacotes
@@ -265,7 +273,7 @@ Sprint-Ford-API/
 │   │   ├── VeiculoController.java                       	# CRUD de veículos + registro automático de consulta
 │   │   ├── EspecificacaoController.java                 	# CRUD de especificações técnicas por veículo
 │   │   ├── ConsultaController.java                      	# Histórico de consultas com isolamento por perfil
-│   │   └── UsuarioController.java       					# CRUD de usuários + anonimização — apenas ADMIN
+│   │   └── UsuarioController.java       					# CRUD de usuários + anonimização - apenas ADMIN
 │   │
 │   ├── domain/                                          # Entidades JPA e enums do modelo de negócio
 │   │   ├── enums/                                       	# Tipos enumerados para normalização de dados
@@ -774,17 +782,17 @@ ford_veiculos (1) ──── (N) ford_especificacoes
 
 ## Endpoints
 
-A API expõe **21 endpoints REST** organizados em 5 grupos de recursos. Todos os endpoints protegidos exigem autenticação via JWT no header `Authorization: Bearer {token}`. O acesso é controlado por perfil — **ADMIN** tem acesso total e **ANALISTA** tem acesso restrito à leitura de veículos, especificações e suas próprias consultas.
+A API expõe **21 endpoints REST** organizados em 5 grupos de recursos. Todos os endpoints protegidos exigem autenticação via JWT no header `Authorization: Bearer {token}`. O acesso é controlado por perfil - **ADMIN** tem acesso total e **ANALISTA** tem acesso restrito à leitura de veículos, especificações e suas próprias consultas.
 
 ### Uso semântico dos métodos HTTP
 
 | Método | Uso no SpecRadar |
 |---|---|
 | `GET` | Consulta de recursos sem efeitos colaterais |
-| `POST` | Criação de novos recursos — retorna 201 Created |
-| `PUT` | Atualização completa de um recurso existente — retorna 200 OK |
-| `DELETE` | Desativação lógica via soft delete — retorna 204 No Content |
-| `PATCH` | Atualização parcial — reativação e anonimização de usuários e veículos |
+| `POST` | Criação de novos recursos - retorna 201 Created |
+| `PUT` | Atualização completa de um recurso existente - retorna 200 OK |
+| `DELETE` | Desativação lógica via soft delete - retorna 204 No Content |
+| `PATCH` | Atualização parcial - reativação e anonimização de usuários e veículos |
 
 ### Autenticação
 
@@ -895,34 +903,94 @@ O Insomnia importa todos os endpoints automaticamente com autenticação Bearer 
 
 ## Segurança
 
-| Requisito | Implementação |
-|---|---|
-| Autenticação | JWT com expiração de 8 horas e assinatura HS256 |
-| Autorização | RBAC com roles `ADMIN` e `ANALISTA` |
-| Senhas | BCrypt com custo 12 - nunca armazenadas em texto plano |
-| Validação de entrada | Bean Validation (`@NotBlank`, `@Size`, `@Email`, `@Min`, `@Max`) |
-| Normalização de parâmetros | Enums para `marca` e `role` - valores inválidos retornam 400 |
-| Proteção contra payloads grandes | `@Size` com limite máximo em todos os campos String |
-| Erros seguros | `GlobalExceptionHandler` - nunca expõe stack trace ou tecnologia |
-| CORS | Origens configuradas via variável de ambiente - nunca `*` |
-| Rate limiting | Bucket4j por IP |
-| HTTPS | Configurado via variável de ambiente em prod |
-| Isolamento de dados | ANALISTA acessa apenas as próprias consultas |
-| Auditoria | Toda consulta a veículo por ID é registrada com usuário e timestamp |
-| Logs de auditoria | SLF4J registra criação, atualização, desativação e reativação de usuários e veículos |
-| Monitoramento de eventos suspeitos | Tentativas não autenticadas e acessos negados logados com IP via SLF4J |
-| Anonimização de dados pessoais | Endpoint `PATCH /api/usuarios/{id}/anonimizar` sobrescreve nome, email e senha com dados fictícios |
+O SpecRadar implementa segurança em múltiplas camadas, atendendo aos 5 critérios de CyberSecurity exigidos no Challenge Ford FIAP 2026.
 
-### Padrão de erros
+---
 
-Todos os erros retornam JSON padronizado, nunca stack trace:
+### 1. Segurança de Entrada e Validação de Dados
 
+**Validação de entradas e sanitização**
+
+Todas as entradas da API são validadas via **Bean Validation** antes de chegarem ao service. SQL Injection é prevenido pelo uso de **Spring Data JPA com queries parametrizadas** — nunca há concatenação de strings SQL. XSS e command injection não são aplicáveis pois a API retorna JSON, não HTML.
+
+```java
+// VeiculoRequest.java — validação declarativa nos DTOs de entrada
+@NotNull(message = "Marca é obrigatória")
+private MarcaVeiculo marca;
+
+@NotBlank(message = "Modelo é obrigatório")
+@Size(min = 1, max = 100, message = "Modelo deve ter no máximo 100 caracteres")
+private String modelo;
+
+@NotNull(message = "Ano é obrigatório")
+@Min(value = 1900, message = "Ano inválido")
+@Max(value = 2100, message = "Ano inválido")
+private Integer ano;
+```
+
+**Normalização e validação de parâmetros de API**
+
+`MarcaVeiculo` e `RoleUsuario` são enums — valores fora do padrão retornam 400 automaticamente. Com `accept-case-insensitive-enums=true`, `"toyota"`, `"Toyota"` e `"TOYOTA"` são todos normalizados para `TOYOTA`.
+
+```java
+// MarcaVeiculo.java — enum garante que apenas valores válidos são aceitos
+public enum MarcaVeiculo {
+    FORD, TOYOTA, VOLKSWAGEN, CHEVROLET, FIAT,
+    HYUNDAI, NISSAN, MITSUBISHI, JEEP, RAM, MERCEDES
+}
+```
+
+```properties
+# application.properties — normalização case-insensitive
+spring.jackson.mapper.accept-case-insensitive-enums=true
+```
+
+**Limitação de tamanho e formato — prevenção de buffer overflow**
+
+Todos os campos String têm `@Size` com limite máximo definido. Testado e validado — modelo com atributo com +100 caracteres retorna 400:
+
+```java
+// EspecificacaoRequest.java
+@NotBlank(message = "Atributo é obrigatório")
+@Size(min = 1, max = 100, message = "Atributo deve ter no máximo 100 caracteres")
+private String atributo;
+
+@NotBlank(message = "Valor é obrigatório")
+@Size(min = 1, max = 255, message = "Valor deve ter no máximo 255 caracteres")
+private String valor;
+```
+
+**Tratamento seguro de erros**
+
+O `GlobalExceptionHandler` intercepta todas as exceções e nunca expõe stack trace, nome de classes ou tecnologia ao cliente:
+
+```java
+// GlobalExceptionHandler.java — handler genérico
+@ExceptionHandler(Exception.class)
+public ResponseEntity handleGenerico(
+        Exception ex, HttpServletRequest request) {
+
+    // Loga internamente via SLF4J — nunca expõe ao cliente
+    log.error("[ERRO INTERNO] {} : {}", ex.getClass().getName(), ex.getMessage());
+
+    return ResponseEntity
+            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .body(ErroResponse.of(
+                    500,
+                    "Erro interno do servidor",
+                    "Ocorreu um erro inesperado. Tente novamente mais tarde.",
+                    request.getRequestURI()
+            ));
+}
+```
+
+Response ao cliente — sem stack trace, sem tecnologia exposta:
 ```json
 {
-  "status": 404,
-  "erro": "Recurso não encontrado",
-  "mensagem": "Veiculo não encontrado com id: 99",
-  "path": "/api/veiculos/99",
+  "status": 500,
+  "erro": "Erro interno do servidor",
+  "mensagem": "Ocorreu um erro inesperado. Tente novamente mais tarde.",
+  "path": "/api/veiculos",
   "timestamp": "2026-05-15T16:00:00",
   "campos": null
 }
@@ -943,6 +1011,282 @@ Para erros de validação, o campo `campos` lista os campos inválidos:
   }
 }
 ```
+
+---
+
+### 2. Autenticação e Autorização
+
+**JWT com expiração, assinatura forte e renovação controlada**
+
+Autenticação via **JWT HS256** com secret gerado por `openssl rand -base64 64` (512 bits — bem acima do mínimo de 256 bits exigido). Expiração padrão de 8 horas configurável via variável de ambiente.
+
+```java
+// JwtService.java — geração do token com claims de role e nome
+public String gerarToken(Usuario usuario) {
+    Map claims = new HashMap<>();
+    claims.put("role", usuario.getRole().name());
+    claims.put("nome", usuario.getNome());
+
+    return Jwts.builder()
+            .claims(claims)
+            .subject(usuario.getEmail())
+            .issuedAt(new Date())
+            .expiration(new Date(System.currentTimeMillis() + expiration))
+            .signWith(getSecretKey())
+            .compact();
+}
+```
+
+```java
+// JwtFilter.java — validação em cada requisição protegida
+if (jwtService.isTokenValido(token, userDetails)) {
+    UsernamePasswordAuthenticationToken authToken =
+            new UsernamePasswordAuthenticationToken(
+                    userDetails, null, userDetails.getAuthorities()
+            );
+    SecurityContextHolder.getContext().setAuthentication(authToken);
+}
+```
+
+**Controle de acesso baseado em papéis (RBAC)**
+
+Dois perfis com permissões distintas definidas no `SecurityConfig`:
+
+```java
+// SecurityConfig.java — regras RBAC
+.requestMatchers(HttpMethod.GET, "/api/veiculos/todos").hasRole("ADMIN")
+.requestMatchers(HttpMethod.GET, "/api/veiculos/**").hasAnyRole("ANALISTA", "ADMIN")
+.requestMatchers(HttpMethod.POST, "/api/veiculos/**").hasRole("ADMIN")
+.requestMatchers("/api/usuarios/**").hasRole("ADMIN")
+.requestMatchers("/api/consultas/**").hasAnyRole("ANALISTA", "ADMIN")
+```
+
+| Ação | ANALISTA | ADMIN |
+|---|---|---|
+| Login | ✅ | ✅ |
+| Listar/buscar veículos e specs | ✅ | ✅ |
+| Ver próprias consultas | ✅ | ✅ |
+| Ver todas as consultas | ❌ | ✅ |
+| Cadastrar/editar/desativar recursos | ❌ | ✅ |
+| Gerenciar usuários | ❌ | ✅ |
+
+---
+
+### 3. Proteção de APIs e Serviços
+
+**HTTPS/TLS**
+
+Configurado via variável de ambiente em produção. Em dev, HTTP é usado localmente — comportamento aceitável para ambiente de desenvolvimento.
+
+**Rate limiting e throttling**
+
+Implementado via **Bucket4j** por IP — previne abuso, scraping excessivo e ataques DoS:
+
+```xml
+		<dependency>
+			<groupId>com.bucket4j</groupId>
+			<artifactId>bucket4j-core</artifactId>
+			<version>${bucket4j.version}</version>
+		</dependency>
+```
+
+**CORS configurado corretamente**
+
+Origens permitidas via variável de ambiente — nunca `*`. Métodos e headers explicitamente listados:
+
+```java
+// CorsConfig.java
+List origins = Arrays.asList(allowedOriginsRaw.split(","));
+config.setAllowedOrigins(origins);
+config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
+config.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "Accept"));
+config.setAllowCredentials(true);
+config.setMaxAge(3600L);
+```
+
+```env
+# .env — origens controladas por variável de ambiente
+CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8081
+```
+
+**Assinatura e verificação de integridade de payloads**
+
+JWT com assinatura HS256 garante que o token não foi manipulado em trânsito. Token com assinatura incorreta é rejeitado pelo `JwtService`:
+
+```java
+// JwtService.java — verificação de assinatura
+private Claims extrairTodosClaims(String token) {
+    return Jwts.parser()
+            .verifyWith(getSecretKey())
+            .build()
+            .parseSignedClaims(token)
+            .getPayload();
+}
+```
+
+---
+
+### 4. Segurança de Dados e Privacidade
+
+**Criptografia de dados sensíveis em repouso**
+
+Senhas armazenadas com **BCrypt custo 12** — nunca em texto plano. Todo novo usuário criado via API tem a senha encodada antes de persistir:
+
+```java
+// UsuarioService.java — senha sempre encodada antes de salvar
+Usuario usuario = Usuario.builder()
+        .nome(dto.getNome())
+        .email(dto.getEmail())
+        .senha(passwordEncoder.encode(dto.getSenha()))
+        .role(dto.getRole())
+        .ativo(true)
+        .build();
+```
+
+Evidência no Oracle — coluna `senha` sempre com hash BCrypt:
+```
+$2a$12$qe56g7GA45wxn2vRaAsFwu0BBfMCWiBifjIzWJgBs4OOdbATQlExC
+```
+
+**Política de retenção e descarte seguro**
+
+Implementado via **soft delete** — registros nunca são deletados fisicamente, preservando integridade referencial. Para usuários que precisam ter dados removidos, o endpoint de anonimização sobrescreve os dados pessoais:
+
+```java
+// UsuarioService.java — anonimização de dados pessoais
+public void anonimizar(Long id) {
+    Usuario usuario = usuarioRepository.findById(id)
+            .orElseThrow(() -> new ResourceNotFoundException("Usuario", id));
+
+    if (usuario.getAtivo()) {
+        throw new IllegalArgumentException(
+                "Apenas usuários desativados podem ser anonimizados"
+        );
+    }
+
+    String emailOriginal = usuario.getEmail();
+    usuario.setNome("Usuário Removido");
+    usuario.setEmail("anonimizado_" + id + "@specradar.com");
+    usuario.setSenha(passwordEncoder.encode(UUID.randomUUID().toString()));
+    usuarioRepository.save(usuario);
+    log.info("[AUDITORIA] Usuário anonimizado — id: {} email original: {}",
+            id, emailOriginal);
+}
+```
+
+**Anonimização/pseudonimização de dados pessoais**
+
+Endpoint `PATCH /api/usuarios/{id}/anonimizar` — disponível apenas para ADMIN. Após a anonimização o registro preserva o ID para manter FKs mas perde todos os dados pessoais identificáveis.
+
+**Proteção contra exposição acidental de dados**
+
+- `UsuarioResponse` nunca inclui o campo `senha`
+- `GlobalExceptionHandler` nunca expõe estrutura interna
+- `.env` no `.gitignore` — credenciais nunca vão para o repositório
+- `spring.jpa.open-in-view=false` previne lazy loading inesperado
+- Swagger documentado — nenhum endpoint não documentado
+
+---
+
+### 5. Monitoramento, Logs e Auditoria
+
+**Logs estruturados e seguros via SLF4J**
+
+Substituição completa de `System.err.println` por **SLF4J** em todo o projeto. Logs não contêm senhas, tokens ou dados sensíveis:
+
+```java
+// GlobalExceptionHandler.java
+private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
+
+log.error("[ERRO INTERNO] {} : {}", ex.getClass().getName(), ex.getMessage());
+```
+
+**Monitoramento de eventos suspeitos**
+
+Tentativas não autenticadas e acessos negados são logados com IP para rastreamento:
+
+```java
+// SecurityConfig.java — log de tentativas suspeitas com IP
+@Bean
+public AuthenticationEntryPoint authenticationEntryPoint() {
+    return (request, response, authException) -> {
+        log.warn("[SEGURANÇA] Tentativa não autenticada em {} — IP: {}",
+                request.getRequestURI(), request.getRemoteAddr());
+        // ...
+    };
+}
+
+@Bean
+public AccessDeniedHandler accessDeniedHandler() {
+    return (request, response, accessDeniedException) -> {
+        log.warn("[SEGURANÇA] Acesso negado em {} — IP: {}",
+                request.getRequestURI(), request.getRemoteAddr());
+        // ...
+    };
+}
+```
+
+```java
+// JwtFilter.java — log de token inválido com path e IP
+log.warn("[SEGURANÇA] Token JWT inválido na requisição {} — IP: {} — motivo: {}",
+        request.getRequestURI(), request.getRemoteAddr(), e.getMessage());
+```
+
+**Trilha de auditoria para ações críticas**
+
+Registro físico no banco via tabela `ford_consultas` — toda consulta a veículo por ID é auditada automaticamente com usuário, veículo e timestamp. Logs de auditoria em todas as ações críticas de usuários, veículos e especificações:
+
+```java
+// UsuarioService.java — logs de auditoria
+log.info("[AUDITORIA] Usuário criado — id: {} email: {} role: {}",
+        response.getId(), response.getEmail(), response.getRole());
+
+log.info("[AUDITORIA] Usuário desativado — id: {} email: {}",
+        id, usuario.getEmail());
+
+log.info("[AUDITORIA] Usuário anonimizado — id: {} email original: {}",
+        id, emailOriginal);
+```
+
+```java
+// VeiculoService.java — logs de auditoria
+log.info("[AUDITORIA] Veículo cadastrado — id: {} marca: {} modelo: {} versao: {}",
+        response.getId(), response.getMarca(),
+        response.getModelo(), response.getVersao());
+```
+
+```java
+// EspecificacaoService.java — logs de auditoria
+log.info("[AUDITORIA] Especificação cadastrada — id: {} veiculoId: {} atributo: {}",
+        response.getId(), veiculoId, response.getAtributo());
+
+log.info("[AUDITORIA] Especificação deletada — id: {} veiculoId: {} atributo: {}",
+        specId, veiculoId, especificacao.getAtributo());
+```
+
+---
+
+### Resumo de Implementação
+
+| Critério | Implementação | Status |
+|---|---|---|
+| Validação de entrada | Bean Validation (`@NotBlank`, `@Size`, `@Email`, `@Min`, `@Max`) | ✅ |
+| Sanitização SQL Injection | Spring Data JPA com queries parametrizadas | ✅ |
+| Normalização de parâmetros | Enums `MarcaVeiculo` e `RoleUsuario` com case-insensitive | ✅ |
+| Limitação de tamanho | `@Size(max=100/150/255)` em todos os campos String | ✅ |
+| Erros seguros | `GlobalExceptionHandler` sem stack trace ou tecnologia | ✅ |
+| Autenticação JWT | HS256, 512 bits, expiração 8h configurável | ✅ |
+| RBAC | `ADMIN` e `ANALISTA` com permissões distintas no `SecurityConfig` | ✅ |
+| Rate limiting | Bucket4j por IP | ✅ |
+| CORS | Origens via variável de ambiente — nunca `*` | ✅ |
+| Integridade de payload | JWT com assinatura HS256 verificada em cada requisição | ✅ |
+| Senhas em repouso | BCrypt custo 12 — nunca texto plano | ✅ |
+| Retenção e descarte | Soft delete + endpoint de anonimização LGPD | ✅ |
+| Anonimização | `PATCH /api/usuarios/{id}/anonimizar` sobrescreve dados pessoais | ✅ |
+| Proteção de exposição | `UsuarioResponse` sem senha, `.env` no `.gitignore` | ✅ |
+| Logs estruturados | SLF4J em todo o projeto — sem dados sensíveis | ✅ |
+| Monitoramento | Logs de IP em tentativas suspeitas e tokens inválidos | ✅ |
+| Trilha de auditoria | `ford_consultas` no banco + logs `[AUDITORIA]` em services | ✅ |
 
 ---
 
@@ -1596,7 +1940,7 @@ Response `200 OK`:
 
 **Anonimizar usuário desativado - `PATCH /api/usuarios/3/anonimizar`**
 
-> Sobrescreve os dados pessoais do usuário desativado com dados fictícios — atende à política de privacidade e retenção de dados (LGPD).
+> Sobrescreve os dados pessoais do usuário desativado com dados fictícios - atende à política de privacidade e retenção de dados (LGPD).
 
 Response `204 No Content` - sem body.
 
