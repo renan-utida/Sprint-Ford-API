@@ -86,7 +86,8 @@ Com o SpecRadar, o tempo de consulta de especificações de um veículo concorre
 ### Segurança e Controle de Acesso
 - Autenticação via JWT com expiração de 8 horas e assinatura HS256
 - RBAC com dois perfis - ADMIN com acesso total, ANALISTA com acesso restrito à leitura
-- Rate limiting por IP via Bucket4j para prevenção de abuso
+- Rate limiting por IP via Bucket4j - 20 req/min, retorna 429 ao exceder
+- HTTPS/TLS com certificado PKCS12 configurado para produção
 - CORS configurado via variável de ambiente - nunca com origem aberta (`*`)
 - Logs de auditoria para todas as ações críticas - criação, atualização, desativação e reativação
 
@@ -269,9 +270,10 @@ Sprint-Ford-API/
 │   │   ├── EspecificacaoRepository.java                 	# findByVeiculoId, findByVeiculoIdAndDisponivelTrue
 │   │   └── ConsultaRepository.java                      	# findByUsuarioId, findByVeiculoId
 │   │
-│   ├── security/                                        # Autenticação e autorização JWT
+│   ├── security/                                        # Autenticação, autorização e proteção de tráfego
 │   │   ├── JwtService.java                              	# Geração, extração de claims e validação de tokens
 │   │   ├── JwtFilter.java                               	# OncePerRequestFilter - intercepta e autentica JWT
+│   │   ├── RateLimitFilter.java                         	# Rate limiting por IP - 20 req/min via Bucket4j
 │   │   └── UserDetailsServiceImpl.java                  	# Carrega usuário do banco pelo email
 │   │
 │   ├── service/                                         # Regras de negócio - camada intermediária
@@ -372,6 +374,35 @@ SPRING_PROFILE=prod
 2. Preencha as credenciais Oracle no `.env`.
 
 3. Rode a aplicação - o Flyway cria as tabelas automaticamente no Oracle na primeira execução.
+
+### Certificado SSL (apenas para perfil prod)
+
+O arquivo `specradar-ssl.p12` está no `.gitignore` por conter material criptográfico sensível. Em **dev, o SSL está desabilitado** - a aplicação roba normalmente sem o certificado.
+
+Para rodar em **prod**, gere o certificado com o comando abaixo na pasta `src/main/resources/`:
+
+```bash
+# Linux/Mac ou terminal do IntelliJ
+keytool -genkeypair -alias specradar -keyalg RSA -keysize 2048 \
+  -storetype PKCS12 -keystore specradar-ssl.p12 -validity 365 \
+  -storepass specradar2026 \
+  -dname "CN=specradar, OU=FIAP, O=Ford, L=Sao Paulo, ST=SP, C=BR"
+```
+
+```bash
+# Windows (Git Bash) - ajuste o caminho conforme sua versão do JDK
+"/c/Program Files/Java/jdk-25.0.2/bin/keytool" -genkeypair -alias specradar \
+  -keyalg RSA -keysize 2048 -storetype PKCS12 -keystore specradar-ssl.p12 \
+  -validity 365 -storepass specradar2026 \
+  -dname "CN=specradar, OU=FIAP, O=Ford, L=Sao Paulo, ST=SP, C=BR"
+```
+
+Após gerar, defina a senha no `.env` e a senha:
+```env
+SSL_KEYSTORE_PASSWORD=specradar2026
+```
+
+> Em **dev** nenhum desses passos é necessário. O SSL só é ativado automaticamente ao rodar com `SPRING_PROFILE=prod`.
 
 ---
 
@@ -493,6 +524,9 @@ spring.flyway.url=jdbc:h2:mem:specradar;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
 spring.flyway.user=Ford
 spring.flyway.password=Fiap2026
 spring.flyway.locations=classpath:db/migration
+
+# SSL desabilitado em dev - HTTP local
+server.ssl.enabled=false
 ```
 
 ---
@@ -522,6 +556,13 @@ spring.flyway.locations=classpath:db/migration
 spring.flyway.baseline-on-migrate=true
 spring.flyway.baseline-version=0
 spring.flyway.out-of-order=true
+
+# SSL / HTTPS
+server.ssl.enabled=true
+server.ssl.key-store=classpath:specradar-ssl.p12
+server.ssl.key-store-password=${SSL_KEYSTORE_PASSWORD}
+server.ssl.key-store-type=PKCS12
+server.ssl.key-alias=specradar
 ```
 
 ---
@@ -1037,13 +1078,68 @@ Dois perfis com permissões distintas definidas no `SecurityConfig`:
 
 ### 3. Proteção de APIs e Serviços
 
-**HTTPS/TLS**
+**HTTPS/TLS com certificado PKCS12**
 
-Configurado via variável de ambiente em produção. Em dev, HTTP é usado localmente - comportamento aceitável para ambiente de desenvolvimento.
+Configurado no perfil `prod` com certificado PKCS12 gerado via `keytool`. Em dev, HTTP local é usado por conveniência - o SSL é ativado automaticamente ao trocar o profile para `prod`:
+
+```properties
+# application-prod.properties
+server.ssl.enabled=true
+server.ssl.key-store=classpath:specradar-ssl.p12
+server.ssl.key-store-password=${SSL_KEYSTORE_PASSWORD}
+server.ssl.key-store-type=PKCS12
+server.ssl.key-alias=specradar
+```
+
+O certificado é gerado com `keytool` e armazenado em `src/main/resources/specradar-ssl.p12`. O arquivo está no `.gitignore` - nunca vai para o repositório. A senha é gerenciada via variável de ambiente `SSL_KEYSTORE_PASSWORD`.
 
 **Rate limiting e throttling**
 
-Implementado via **Bucket4j** por IP - previne abuso, scraping excessivo e ataques DoS:
+Implementado via `RateLimitFilter` em `security/` usando **Bucket4j** - 20 requisições por minuto por IP com janela deslizante (greedy refill). Aplicado globalmente a todos os endpoints, incluindo login e Swagger, para prevenir brute force e DoS. IPs que excedem o limite recebem `429 Too Many Requests`:
+
+```java
+// RateLimitFilter.java
+@Component
+public class RateLimitFilter extends OncePerRequestFilter {
+
+    private static final int MAX_REQUESTS_PER_MINUTE = 20;
+
+    @Override
+    protected void doFilterInternal(...) {
+        String ip = extrairIp(request);
+        Bucket bucket = buckets.computeIfAbsent(ip, this::criarNovoBucket);
+
+        if (bucket.tryConsume(1)) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
+        log.warn("[SEGURANÇA] Rate limit excedido - IP: {} endpoint: {}",
+                ip, request.getRequestURI());
+
+        response.setStatus(429);
+        // retorna JSON padronizado sem stack trace
+    }
+}
+```
+
+O filtro é registrado no `SecurityConfig` antes do `JwtFilter` - bloqueia antes mesmo de processar a autenticação:
+
+```java
+.addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
+.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
+```
+
+Response ao exceder o limite:
+```json
+{
+  "status": 429,
+  "erro": "Muitas requisições",
+  "mensagem": "Limite de requisições excedido. Tente novamente em 1 minuto.",
+  "path": "/api/veiculos",
+  "timestamp": "2026-05-15T16:00:00"
+}
+```
 
 ```xml
 		<dependency>
@@ -1240,7 +1336,8 @@ log.info("[AUDITORIA] Especificação deletada - id: {} veiculoId: {} atributo: 
 | Erros seguros | `GlobalExceptionHandler` sem stack trace ou tecnologia | ✅ |
 | Autenticação JWT | HS256, 512 bits, expiração 8h configurável | ✅ |
 | RBAC | `ADMIN` e `ANALISTA` com permissões distintas no `SecurityConfig` | ✅ |
-| Rate limiting | Bucket4j por IP | ✅ |
+| Rate limiting | `RateLimitFilter` com Bucket4j - 20 req/min por IP, retorna 429 | ✅ |
+| HTTPS/TLS | Certificado PKCS12 via keytool, habilitado no profile prod | ✅ |
 | CORS | Origens via variável de ambiente - nunca `*` | ✅ |
 | Integridade de payload | JWT com assinatura HS256 verificada em cada requisição | ✅ |
 | Senhas em repouso | BCrypt custo 12 - nunca texto plano | ✅ |
@@ -1936,6 +2033,7 @@ Após a anonimização, o usuário no banco passa a ter:
 | ANALISTA tentando listar usuários | 403 com mensagem | ✅ |
 | ANALISTA tentando registrar usuário | 403 com mensagem | ✅ |
 | Token inválido em qualquer endpoint | 401 com mensagem | ✅ |
+| Exceder 20 requisições por minuto | 429 com mensagem | ✅ |
 
 ---
 
@@ -2143,6 +2241,21 @@ Response `404 Not Found`:
   "path": "/api/usuarios/999",
   "timestamp": "2026-05-14T20:57:03",
   "campos": null
+}
+```
+
+---
+
+**Rate limit excedido - qualquer endpoint após 20 req/min**
+
+Response `429 Too Many Requests`:
+```json
+{
+  "status": 429,
+  "erro": "Muitas requisições",
+  "mensagem": "Limite de requisições excedido. Tente novamente em 1 minuto.",
+  "path": "/api/auth/login",
+  "timestamp": "2026-05-15T16:00:00"
 }
 ```
 
