@@ -1,6 +1,7 @@
 package br.com.ford.specradar.config;
 
 import br.com.ford.specradar.security.JwtFilter;
+import br.com.ford.specradar.security.RateLimitFilter;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,6 +37,7 @@ public class SecurityConfig {
     private static final Logger log = LoggerFactory.getLogger(SecurityConfig.class);
 
     private final JwtFilter jwtFilter;
+    private final RateLimitFilter rateLimitFilter;
     private final UserDetailsService userDetailsService;
 
     @Bean
@@ -102,7 +104,8 @@ public class SecurityConfig {
                         .anyRequest().authenticated()
                 )
 
-                // Registra o JwtFilter antes do filtro padrão do Spring
+                // Registra o RateLimitFilter e o JwtFilter antes do filtro padrão do Spring
+                .addFilterBefore(rateLimitFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
 
                 // Configura o provider de autenticação

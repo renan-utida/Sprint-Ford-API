@@ -38,3 +38,4 @@ build/
 # Logs
 *.log
 
+src/main/resources/specradar-ssl.p12
