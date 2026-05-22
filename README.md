@@ -375,6 +375,13 @@ SPRING_PROFILE=prod
 
 3. Rode a aplicação - o Flyway cria as tabelas automaticamente no Oracle na primeira execução.
 
+4. Acesse o Swagger em prod:
+```
+https://localhost:8443/swagger-ui.html
+```
+> O navegador exibirá um aviso de segurança - o certificado é self-signed e não foi emitido por uma autoridade certificadora reconhecida (como DigiCert ou Let's Encrypt). Clique em **"Avançado"** e **"Prosseguir assim mesmo"** para acessar normalmente. Esse aviso é esperado e confirma que o HTTPS está ativo. Em produção real, seria usado um certificado emitido por uma CA confiável.
+
+
 ### Certificado SSL (apenas para perfil prod)
 
 O arquivo `specradar-ssl.p12` está no `.gitignore` por conter material criptográfico sensível. Em **dev, o SSL está desabilitado** - a aplicação roba normalmente sem o certificado.
@@ -1094,10 +1101,20 @@ Dois perfis com permissões distintas definidas no `SecurityConfig`:
 
 **HTTPS/TLS com certificado PKCS12**
 
-Configurado no perfil `prod` com certificado PKCS12 gerado via `keytool`. Em dev, HTTP local é usado por conveniência - o SSL é ativado automaticamente ao trocar o profile para `prod`:
+Configurado no perfil `prod` com certificado PKCS12 gerado via `keytool`. A separação é feita por profile - sem nenhuma variável de ambiente para controlar isso:
+
+| Perfil | Protocolo | Porta | SSL |
+|---|---|---|---|
+| dev | HTTP | 8080 | Desabilitado |
+| prod | HTTPS | 8443 | Habilitado |
 
 ```properties
+# application-dev.properties
+server.port=8080
+server.ssl.enabled=false
+
 # application-prod.properties
+server.port=8443
 server.ssl.enabled=true
 server.ssl.key-store=classpath:specradar-ssl.p12
 server.ssl.key-store-password=${SSL_KEYSTORE_PASSWORD}
@@ -1106,6 +1123,12 @@ server.ssl.key-alias=specradar
 ```
 
 O certificado é gerado com `keytool` e armazenado em `src/main/resources/specradar-ssl.p12`. O arquivo está no `.gitignore` - nunca vai para o repositório. A senha é gerenciada via variável de ambiente `SSL_KEYSTORE_PASSWORD`.
+
+Quando `server.ssl.enabled=true`, o Spring Boot desabilita o HTTP completamente - a aplicação responde **apenas** em HTTPS na porta 8443. Qualquer acesso a `http://localhost:8080` em prod é recusado.
+
+> **Aviso de certificado no navegador:** ao acessar `https://localhost:8443` em prod, o navegador exibirá um aviso de segurança informando que o certificado não é confiável. Isso ocorre porque o certificado é self-signed - não foi emitido por uma autoridade certificadora reconhecida (como DigiCert ou Let's Encrypt). Clique em **"Avançado"** e **"Prosseguir assim mesmo"** para acessar o Swagger normalmente. Esse aviso é esperado e na prática **prova que o HTTPS está funcionando** - o navegador tentou validar o certificado SSL e encontrou um certificado autoassinado. Em produção real, seria usado um certificado emitido por uma CA confiável.
+
+> **Insomnia em prod:** troque a URL para `https://localhost:8443/api/auth/login` e desabilite a validação de certificado em **Settings → Security → Validate certificates**.
 
 **Rate limiting e throttling**
 
@@ -1351,7 +1374,7 @@ log.info("[AUDITORIA] Especificação deletada - id: {} veiculoId: {} atributo: 
 | Autenticação JWT | HS256, 512 bits, expiração 8h configurável | ✅ |
 | RBAC | `ADMIN` e `ANALISTA` com permissões distintas no `SecurityConfig` | ✅ |
 | Rate limiting | `RateLimitFilter` com Bucket4j - 20 req/min por IP, retorna 429 | ✅ |
-| HTTPS/TLS | Certificado PKCS12 via keytool, habilitado no profile prod | ✅ |
+| HTTPS/TLS | Certificado PKCS12 self-signed, porta 8443 em prod, HTTP desabilitado | ✅ |
 | CORS | Origens via variável de ambiente - nunca `*` | ✅ |
 | Integridade de payload | JWT com assinatura HS256 verificada em cada requisição | ✅ |
 | Senhas em repouso | BCrypt custo 12 - nunca texto plano | ✅ |
@@ -1395,7 +1418,7 @@ E se estuver rodando em `prod`, acesse:
 https://localhost:8443/swagger-ui.html
 ```
 
-> **Em prod** o navegador exibirá um aviso de certificado não confiável por ser self-signed — clique em **"Avançar assim mesmo"** para acessar. Esse aviso confirma que o HTTPS está ativo e funcionando.
+> **Em prod** o navegador exibirá um aviso de certificado não confiável por ser self-signed - clique em **"Avançar assim mesmo"** para acessar. Esse aviso confirma que o HTTPS está ativo e funcionando.
 
 A documentação completa da API com exemplos de request e response está disponível diretamente no Swagger UI. Para testar endpoints protegidos, clique em **Authorize** e informe o token JWT obtido no login.
 
