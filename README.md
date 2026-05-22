@@ -857,6 +857,11 @@ A API expõe **21 endpoints REST** organizados em 5 grupos de recursos. Todos os
 
 ---
 
+<img width="1093" height="1007" alt="Captura de tela 2026-05-21 223552" src="https://github.com/user-attachments/assets/1d856b8b-f139-45e6-a29c-faf67b289f4b" />
+<img width="1090" height="736" alt="Captura de tela 2026-05-21 223609" src="https://github.com/user-attachments/assets/8f391efe-d6a7-4340-9da2-a122e38f73b7" />
+
+---
+
 ## Autenticação
 
 A API usa **JWT (JSON Web Token)** com expiração de 8 horas.
@@ -1433,6 +1438,32 @@ http://localhost:8080/v3/api-docs
 ```
 http://localhost:8443/v3/api-docs
 ```
+
+### DEV
+
+**Banner (DEV):**
+
+Ao rodarmos o SpecradarApplication.java, ele rodará e exibirá esse banner interativo ao usuário:
+
+<img width="1919" height="977" alt="image" src="https://github.com/user-attachments/assets/41dc1124-e51b-493e-ad15-286b45bac34e" />
+
+**Exibindo o Swagger:**
+
+<img width="1111" height="1015" alt="image" src="https://github.com/user-attachments/assets/eebfbbcd-f248-4278-9086-0dd1258c5f05" />
+
+### PROD
+
+**Banner (PROD):**
+
+Ao rodarmos o SpecradarApplication.java, ele rodará e exibirá esse banner interativo ao usuário:
+
+<img width="1919" height="979" alt="image" src="https://github.com/user-attachments/assets/6b94c441-294c-4855-9906-94c45015fcbf" />
+
+**Exibindo o Swagger:**
+
+<img width="1114" height="1016" alt="image" src="https://github.com/user-attachments/assets/cfb8af9e-07a6-417d-b9ca-a41d913fd3e8" />
+
+> O navegador exibirá um aviso de segurança (dizendo que o certificado não é confiável) - o certificado é self-signed e não foi emitido por uma autoridade certificadora reconhecida (como DigiCert ou Let's Encrypt) - isso é esperado e normal para certificados autoassinados. Clique em **"Avançado"** e **"Prosseguir assim mesmo"** para acessar normalmente. Esse aviso é esperado e confirma que o HTTPS está ativo. Em produção real, seria usado um certificado emitido por uma CA confiável.
 
 ---
 
