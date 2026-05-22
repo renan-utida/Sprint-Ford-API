@@ -435,12 +435,11 @@ ORACLE_PASSWORD=sua_senha_aqui
 JWT_SECRET=
 JWT_EXPIRATION=28800000
 
-# Servidor
-SERVER_PORT=8080
-
 # CORS - separar múltiplas origens por vírgula
 CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:8081,exp://localhost:8081
 ```
+
+> A porta é definida automaticamente por perfil: **8080** em dev e **8443** em prod. Não é necessário configurar manualmente.
 
 **3. Gere o JWT_SECRET:**
 
@@ -466,7 +465,6 @@ Configurações globais compartilhadas entre todos os perfis:
 ```properties
 # APLICACAO
 spring.application.name=specradar
-server.port=${SERVER_PORT:8080}
 
 # Profile ativo (trocar para prod ao subir no Oracle)
 spring.profiles.active=${SPRING_PROFILE:dev}
@@ -525,6 +523,9 @@ spring.flyway.user=Ford
 spring.flyway.password=Fiap2026
 spring.flyway.locations=classpath:db/migration
 
+# SERVIDOR (DEV)
+server.port=8080
+
 # SSL desabilitado em dev - HTTP local
 server.ssl.enabled=false
 ```
@@ -556,6 +557,9 @@ spring.flyway.locations=classpath:db/migration
 spring.flyway.baseline-on-migrate=true
 spring.flyway.baseline-version=0
 spring.flyway.out-of-order=true
+
+# SERVIDOR (PROD) - HTTPS
+server.port=8443
 
 # SSL / HTTPS
 server.ssl.enabled=true
@@ -880,11 +884,21 @@ Clique em **Authorize** (cadeado), cole o token e clique em **Authorize**. Todos
 
 ### No Insomnia
 
-Importe a coleção pela URL:
+Se estiver rodando em **Dev**, importe a coleção pela URL:
+
 ```
 http://localhost:8080/v3/api-docs
 ```
+
+E se estiver rodando em **Prod**, importe a coleção pela URL:
+
+```
+https://localhost:8443/v3/api-docs
+```
+
 O Insomnia importa todos os endpoints automaticamente com autenticação Bearer configurada.
+
+> Em prod, desabilite a validação de certificado no Insomnia em **Settings → Security → Validate certificates** para aceitar o certificado self-signed.
 
 ---
 
@@ -1363,18 +1377,38 @@ log.info("[AUDITORIA] Especificação deletada - id: {} veiculoId: {} atributo: 
 
 ## Documentação Swagger
 
-Com a aplicação rodando, acesse:
+### Acesso dev / prod
+| Perfil | Protocolo | Porta | Swagger |
+|---|---|---|---|
+| dev | HTTP | 8080 | http://localhost:8080/swagger-ui.html |
+| prod | HTTPS | 8443 | https://localhost:8443/swagger-ui.html |
 
+### Como acessar
+
+Com a aplicação rodando, se estiver rodando em `dev`, acesse:
 ```
 http://localhost:8080/swagger-ui.html
 ```
+
+E se estuver rodando em `prod`, acesse:
+```
+https://localhost:8443/swagger-ui.html
+```
+
+> **Em prod** o navegador exibirá um aviso de certificado não confiável por ser self-signed — clique em **"Avançar assim mesmo"** para acessar. Esse aviso confirma que o HTTPS está ativo e funcionando.
 
 A documentação completa da API com exemplos de request e response está disponível diretamente no Swagger UI. Para testar endpoints protegidos, clique em **Authorize** e informe o token JWT obtido no login.
 
 A especificação OpenAPI 3.0 em formato JSON está disponível em:
 
+`dev`:
 ```
 http://localhost:8080/v3/api-docs
+```
+
+`prod`:
+```
+http://localhost:8443/v3/api-docs
 ```
 
 ---
