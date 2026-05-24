@@ -6,6 +6,24 @@ O **SpecRadar** é uma API REST de inteligência competitiva automotiva desenvol
 
 ---
 
+## Demonstrações em Vídeo
+
+**Perfil Dev - Swagger UI**
+
+Demonstração completa da API rodando em desenvolvimento com banco H2 em memória via Swagger UI, cobrindo autenticação JWT, RBAC, CRUD de veículos e especificações, histórico de consultas, gestão de usuários com anonimização LGPD, validação de entrada e rate limiting.
+
+https://youtu.be/DiZhD8Phs3M
+
+---
+
+**Perfil Prod - HTTPS + Insomnia**
+
+Demonstração completa da API rodando em produção com HTTPS/TLS ativo na porta 8443 e banco Oracle FIAP, testada via Insomnia. Inclui configuração do certificado self-signed, importação da coleção via API Docs, todos os endpoints funcionando perfeitamente.
+
+https://youtu.be/7Yk_xv2Ih5s
+
+---
+
 ## Sumário
 
 - [Contexto](#contexto)
