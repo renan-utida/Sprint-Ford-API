@@ -4,6 +4,10 @@
 
 O **SpecRadar** é uma API REST de inteligência competitiva automotiva desenvolvida para a Ford como parte da Sprint 1 da parceria Ford × FIAP 2026. A solução digitaliza e automatiza o processo de coleta, armazenamento e consulta de especificações técnicas de veículos concorrentes, permitindo que analistas da Ford tomem decisões estratégicas com dados precisos e atualizados em tempo real.
 
+**Link Repositório:**
+
+https://github.com/renan-utida/Sprint-Ford-API
+
 ---
 
 ## Demonstrações em Vídeo
